@@ -1,7 +1,5 @@
 add_executable(oanpeer
         main.cpp
-        NetworkMapper.cpp
-        NetworkMapper.h
         peer_conf.h
 )
 

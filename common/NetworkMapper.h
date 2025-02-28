@@ -10,7 +10,7 @@
 #include "netutils/udp.h"
 #include "common/packet_structs.h"
 
-#include "peer_conf.h"
+#include "../peer/peer_conf.h"
 
 struct PeerInfos {
     MappingData peer_data;

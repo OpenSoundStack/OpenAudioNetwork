@@ -6,7 +6,7 @@
 #include <jsoncpp/json/json.h>
 
 #include "peer_conf.h"
-#include "NetworkMapper.h"
+#include "../common/NetworkMapper.h"
 
 std::optional<PeerConf> config_from_json(const std::string& path) {
     std::ifstream f{path};
