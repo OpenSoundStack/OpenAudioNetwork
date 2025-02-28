@@ -1,0 +1,21 @@
+{
+  "ident": {
+    "name": "CORE I",
+    "type": 0,
+    "sampling_rate": 96,
+    "uid":  1
+  },
+
+  "networking": {
+    "self_ip": [192, 168, 122, 1],
+    "netmask": [255, 255, 255, 0],
+    "mapping_port": 11000,
+    "audio_port": 8000
+  },
+
+  "topology": {
+    "phy_in": 0,
+    "phy_out": 0,
+    "pipes": 0
+  }
+}

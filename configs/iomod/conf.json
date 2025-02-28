@@ -1,0 +1,21 @@
+{
+  "ident": {
+    "name": "8in mod",
+    "type": 2,
+    "sampling_rate": 96,
+    "uid":  2
+  },
+
+  "networking": {
+    "self_ip": [192, 168, 122, 161],
+    "netmask": [255, 255, 255, 0],
+    "mapping_port": 11000,
+    "audio_port": 8000
+  },
+
+  "topology": {
+    "phy_in": 8,
+    "phy_out": 0,
+    "pipes": 0
+  }
+}
