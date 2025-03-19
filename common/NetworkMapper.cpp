@@ -108,9 +108,9 @@ void NetworkMapper::process_packet(MappingPacket pck) {
 
     if(!m_peers.contains(pck.packet_data.self_uid)) {
         std::cout << "Discovered " << pck.packet_data.dev_name << " (ID = " << pck.packet_data.self_uid << ")" << std::endl;
-        std::cout << "Audio config : " << pck.packet_data.topo.phy_out_count << " outs" << std::endl;
-        std::cout << "               " << pck.packet_data.topo.phy_in_count << " ins" << std::endl;
-        std::cout << "               " << pck.packet_data.topo.pipes_count << " pipes" << std::endl;
+        std::cout << "Audio config : " << (int)pck.packet_data.topo.phy_out_count << " outs" << std::endl;
+        std::cout << "               " << (int)pck.packet_data.topo.phy_in_count << " ins" << std::endl;
+        std::cout << "               " << (int)pck.packet_data.topo.pipes_count << " pipes" << std::endl;
 
         {
             std::lock_guard<std::mutex> m{m_mapper_mutex};

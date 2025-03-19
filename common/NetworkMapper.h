@@ -7,8 +7,8 @@
 #include <unordered_map>
 #include <algorithm>
 
-#include "netutils/udp.h"
-#include "common/packet_structs.h"
+#include "../netutils/udp.h"
+#include "packet_structs.h"
 
 #include "../peer/peer_conf.h"
 
