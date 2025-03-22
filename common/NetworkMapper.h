@@ -25,6 +25,7 @@ public:
     bool init_mapper();
     void launch_mapping_process();
 
+    static uint64_t local_now();
 private:
     void packet_sender();
     void packet_receiver();
@@ -33,8 +34,6 @@ private:
     void update_packet(const PeerConf& pconf);
 
     void process_packet(MappingPacket pck);
-
-    static uint64_t local_now();
 
     MappingPacket m_packet;
     uint32_t m_netmask;

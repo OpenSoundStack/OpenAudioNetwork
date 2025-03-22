@@ -38,8 +38,8 @@ struct NodeTopology {
 template<class Tdata>
 struct CommonHeader {
     PacketType type;
-    uint32_t version;
-    uint32_t flags;
+    uint16_t version;
+    uint16_t flags;
     uint64_t timestamp;
     Tdata packet_data;
     uint16_t sender_uid;
@@ -64,7 +64,7 @@ struct ControlData {
 
 struct AudioData {
     uint8_t channel;
-    uint32_t samples[64];
+    float samples[64];
 };
 
 typedef CommonHeader<MappingData> MappingPacket;

@@ -4,6 +4,12 @@ add_library(oancommon
         audio_conf.h
         NetworkMapper.cpp
         NetworkMapper.h
+        AudioPipe.cpp
+        AudioPipe.h
+        base_pipes/AudioInPipe.cpp
+        base_pipes/AudioInPipe.h
+        base_pipes/AudioPortalPipe.cpp
+        base_pipes/AudioPortalPipe.h
 )
 
 target_link_libraries(oancommon PUBLIC oannetutils)

@@ -41,3 +41,12 @@ void UDPSocket::enable_broadcasting() const {
     setsockopt(m_socket, SOL_SOCKET, SO_BROADCAST, &br_en, sizeof(int));
     setsockopt(m_socket, SOL_SOCKET, SO_REUSEPORT, &br_en, sizeof(int));
 }
+
+void UDPSocket::set_high_prio() const {
+    int prio = 6;
+    setsockopt(m_socket, SOL_SOCKET, SO_PRIORITY, &prio, sizeof(int));
+
+    int enable = SOF_TIMESTAMPING_TX_HARDWARE | SOF_TIMESTAMPING_TX_SOFTWARE;
+    setsockopt(m_socket, SOL_SOCKET, SO_TIMESTAMPING, &enable, sizeof(enable));
+}
+

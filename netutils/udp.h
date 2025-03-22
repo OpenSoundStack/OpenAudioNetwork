@@ -6,6 +6,8 @@
 #include <memory>
 
 #include <unistd.h>
+#include <netinet/udp.h>
+#include <linux/net_tstamp.h>
 #include <arpa/inet.h>
 #include <fcntl.h>
 
@@ -20,6 +22,7 @@ public:
 
     bool init_socket(uint32_t bound_ip, uint16_t port);
     void enable_broadcasting() const;
+    void set_high_prio() const;
 
     template<class T>
     int receive_data(T* buffer, const size_t buffer_size,  sockaddr_in& client, bool async = true) {

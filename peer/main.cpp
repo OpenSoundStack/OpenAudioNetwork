@@ -6,7 +6,11 @@
 #include <jsoncpp/json/json.h>
 
 #include "peer_conf.h"
-#include "../common/NetworkMapper.h"
+#include "common/NetworkMapper.h"
+
+#include "common/AudioPipe.h"
+#include "common/base_pipes/AudioInPipe.h"
+#include "common/base_pipes/AudioPortalPipe.h"
 
 std::optional<PeerConf> config_from_json(const std::string& path) {
     std::ifstream f{path};
@@ -113,8 +117,26 @@ int main(int argc, char* argv[]) {
         exit(-1);
     }
 
-    while(true) {
+    // AUDIO PIPES TEST
+    std::shared_ptr<UDPSocket> audio_socket = std::make_shared<UDPSocket>();
+    audio_socket->init_socket(INADDR_ANY, conf.audio_port);
+    audio_socket->set_high_prio();
 
+    std::unique_ptr<AudioInPipe> pipe = std::make_unique<AudioInPipe>();
+    auto portal = std::make_unique<AudioPortalPipe>(
+        1, ip(127, 0, 0, 1), conf.audio_port, audio_socket
+    );
+
+    pipe->set_next_pipe(std::move(portal));
+    pipe->set_gain_lin(100);
+
+    uint64_t time_delta = 0;
+    while(true) {
+        uint64_t now = NetworkMapper::local_now();
+        pipe->acquire_sample((float)(0xFFFFFFFF));
+
+        time_delta = (NetworkMapper::local_now() - now) / 1000;
+        usleep(600 - time_delta);
     }
 
     return 0;
