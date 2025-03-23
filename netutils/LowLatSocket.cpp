@@ -11,8 +11,8 @@ LowLatSocket::~LowLatSocket() {
     close(m_socket);
 }
 
-bool LowLatSocket::init_socket(std::string interface) {
-    m_socket = socket(AF_PACKET, SOCK_RAW, htons(ETH_PROTO_OANAUDIO));
+bool LowLatSocket::init_socket(std::string interface, EthProtocol proto) {
+    m_socket = socket(AF_PACKET, SOCK_RAW, htons(proto));
     if (m_socket < 0) {
         std::cerr << "LLS Failed to open low level socket. Err = " << errno << std::endl;
         return false;
@@ -22,12 +22,12 @@ bool LowLatSocket::init_socket(std::string interface) {
 
     m_iface_addr.sll_ifindex = meta.idx;
     m_iface_addr.sll_halen = ETH_ALEN;
-    m_iface_addr.sll_protocol = htons(ETH_PROTO_OANAUDIO);
+    m_iface_addr.sll_protocol = htons(proto);
     memcpy(m_iface_addr.sll_addr, meta.mac, 6);
 
     memset(m_hdr.h_dest, 0xFF, 6);
     memcpy(m_hdr.h_source, meta.mac, 6);
-    m_hdr.h_proto = htons(ETH_PROTO_OANAUDIO);
+    m_hdr.h_proto = htons(proto);
 
     return true;
 }
@@ -37,6 +37,9 @@ IfaceMeta get_iface_meta(const std::string &name) {
     assert(name.size() <= 16);
 
     int sock = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sock < 0) {
+        perror("Failed to open temporary socket");
+    }
 
     ifreq req{};
     memset(req.ifr_ifrn.ifrn_name, 0x00, 16);

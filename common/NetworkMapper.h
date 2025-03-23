@@ -23,7 +23,7 @@ public:
     NetworkMapper(const PeerConf& pconf);
     ~NetworkMapper();
 
-    bool init_mapper();
+    bool init_mapper(const std::string& iface);
     void launch_mapping_process();
 
     static uint64_t local_now();
@@ -40,7 +40,7 @@ private:
     uint32_t m_netmask;
     uint16_t m_mapping_port;
 
-    std::unique_ptr<UDPSocket> m_map_socket;
+    std::unique_ptr<LowLatSocket> m_map_socket;
 
     std::unordered_map<int, PeerInfos> m_peers;
 

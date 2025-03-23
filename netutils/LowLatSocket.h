@@ -13,16 +13,22 @@
 #include <unistd.h>
 #include <sys/ioctl.h>
 
-#define ETH_PROTO_OANAUDIO 0x0681
+enum EthProtocol : uint16_t {
+    ETH_PROTO_OANAUDIO = 0x0681,
+    ETH_PROTO_OANDISCO = 0x0682
+};
 
-template<int payload_size__>
+template<class T>
 struct LowLatPacket {
     ethhdr eth_header;
     uint16_t sender_uid;
     uint16_t dest_uid;
     uint16_t psize;
-    char payload[payload_size__];
-};
+    T payload;
+} __attribute__((packed));
+
+template<int payload_size__>
+struct INT_LLP : public LowLatPacket<char[payload_size__]> {};
 
 struct IfaceMeta {
     char mac[6];
@@ -36,11 +42,11 @@ public:
     LowLatSocket(uint16_t self_uid);
     ~LowLatSocket();
 
-    bool init_socket(std::string interface);
+    bool init_socket(std::string interface, EthProtocol proto);
 
     template<class T>
     int send_data(const T& data, uint16_t dest_uid) {
-        LowLatPacket<sizeof(T)> llpck;
+        INT_LLP<sizeof(T)> llpck;
         llpck.eth_header = m_hdr;
         llpck.dest_uid = dest_uid;
         llpck.sender_uid = m_self_uid;
@@ -54,6 +60,11 @@ public:
             (sockaddr*)&m_iface_addr,
             sizeof(m_iface_addr)
         );
+    }
+
+    template<class T>
+    int receive_data(T* data, bool async = true) {
+        return recv(m_socket, data, sizeof(T), async ? MSG_DONTWAIT : 0);
     }
 
 private:

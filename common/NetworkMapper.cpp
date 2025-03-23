@@ -8,13 +8,10 @@ NetworkMapper::~NetworkMapper() {
 
 }
 
-bool NetworkMapper::init_mapper() {
-    m_map_socket = std::make_unique<UDPSocket>();
+bool NetworkMapper::init_mapper(const std::string& iface) {
+    m_map_socket = std::make_unique<LowLatSocket>(m_packet.packet_data.self_uid);
 
-    bool res = m_map_socket->init_socket(
-            INADDR_ANY,
-            m_mapping_port
-    );
+    bool res = m_map_socket->init_socket(iface, EthProtocol::ETH_PROTO_OANDISCO);
 
     return res;
 }
@@ -28,7 +25,10 @@ void NetworkMapper::update_packet(const PeerConf &pconf) {
     m_packet.packet_data.self_uid = pconf.uid;
     m_packet.packet_data.type = pconf.dev_type;
     m_packet.packet_data.sample_rate = pconf.sample_rate;
-    m_packet.packet_data.self_address = 0x00000000;
+
+    m_packet.packet_data.self_address = 0;
+    memcpy(&m_packet.packet_data.self_address, iface_meta.mac, 6);
+
     memcpy(&m_packet.packet_data.dev_name, pconf.dev_name, 32);
 }
 
@@ -52,25 +52,22 @@ void NetworkMapper::launch_mapping_process() {
 }
 
 void NetworkMapper::packet_sender() {
-    const uint32_t addr = m_packet.packet_data.self_address | ~(m_netmask);
-    //const uint32_t addr = ip(192, 168, 122, 255);
-
     while(true) {
-        m_map_socket->send_data<MappingPacket>(&m_packet, 1, addr, m_mapping_port);
+        m_map_socket->send_data<MappingPacket>(m_packet, 0);
 
         usleep(5000000);
     }
 }
 
 void NetworkMapper::packet_receiver() {
-    MappingPacket pck;
+    LowLatPacket<MappingPacket> pck{};
     sockaddr_in sender = {};
 
     while(true) {
-        m_map_socket->receive_data(&pck, 1, sender, false);
+        m_map_socket->receive_data(&pck, false);
 
-        if(pck.type == PacketType::MAPPING) {
-            process_packet(pck);
+        if(pck.payload.type == PacketType::MAPPING) {
+            process_packet(pck.payload);
         }
     }
 }
