@@ -22,7 +22,6 @@ bool NetworkMapper::init_mapper() {
 
 void NetworkMapper::update_packet(const PeerConf &pconf) {
     m_packet.type = PacketType::MAPPING;
-    m_packet.sender_uid = pconf.uid;
 
     m_packet.packet_data.topo = pconf.topo;
 
@@ -73,7 +72,7 @@ void NetworkMapper::packet_receiver() {
     while(true) {
         m_map_socket->receive_data(&pck, 1, sender, false);
 
-        if(pck.type == PacketType::MAPPING && pck.sender_uid != m_packet.sender_uid) {
+        if(pck.type == PacketType::MAPPING) {
             process_packet(pck);
         }
     }

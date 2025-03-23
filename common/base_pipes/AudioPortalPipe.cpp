@@ -1,6 +1,6 @@
 #include "AudioPortalPipe.h"
 
-AudioPortalPipe::AudioPortalPipe(uint8_t channel, uint32_t ip, uint16_t port, const std::shared_ptr<UDPSocket>& iface) {
+AudioPortalPipe::AudioPortalPipe(uint8_t channel, uint32_t ip, uint16_t port, const std::shared_ptr<LowLatSocket>& iface) {
     m_channel_no = channel;
     m_dest_sock = iface;
 

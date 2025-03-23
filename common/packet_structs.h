@@ -42,7 +42,6 @@ struct CommonHeader {
     uint16_t flags;
     uint64_t timestamp;
     Tdata packet_data;
-    uint16_t sender_uid;
 };
 
 struct MappingData {

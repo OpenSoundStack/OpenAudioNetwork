@@ -12,6 +12,8 @@
 #include "common/base_pipes/AudioInPipe.h"
 #include "common/base_pipes/AudioPortalPipe.h"
 
+#include "netutils/LowLatSocket.h"
+
 std::optional<PeerConf> config_from_json(const std::string& path) {
     std::ifstream f{path};
     if(!f.is_open()) {
@@ -88,6 +90,12 @@ PeerConf get_default_conf() {
     return conf;
 }
 
+uint64_t local_now_ns() {
+    return std::chrono::duration_cast<std::chrono::nanoseconds>(
+            std::chrono::high_resolution_clock::now().time_since_epoch()
+    ).count();
+}
+
 int main(int argc, char* argv[]) {
     std::cout << "OpenAudioNetwork Peer client-server" << std::endl;
 
@@ -130,13 +138,22 @@ int main(int argc, char* argv[]) {
     pipe->set_next_pipe(std::move(portal));
     pipe->set_gain_lin(100);
 
-    uint64_t time_delta = 0;
-    while(true) {
-        uint64_t now = NetworkMapper::local_now();
-        pipe->acquire_sample((float)(0xFFFFFFFF));
+    LowLatSocket sock{conf.uid};
+    if (!sock.init_socket("enp1s0")) {
+        std::cerr << "Failed ll socket init" << std::endl;
+    }
 
-        time_delta = (NetworkMapper::local_now() - now) / 1000;
-        usleep(600 - time_delta);
+    uint64_t last = local_now_ns();
+    while(true) {
+        if (sock.send_data(0xFFFFFFFF, 2) < 0) {
+            perror("LLS Failed");
+        }
+
+        usleep(540);
+        //if (local_now_ns() - last >= 10410) {
+        //    pipe->acquire_sample((float)(0xFFFFFFFF));
+        //    last = local_now_ns();
+        //}
     }
 
     return 0;
