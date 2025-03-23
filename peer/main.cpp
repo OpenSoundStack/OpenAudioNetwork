@@ -2,6 +2,7 @@
 #include <string>
 #include <fstream>
 #include <optional>
+#include <cmath>
 
 #include <jsoncpp/json/json.h>
 
@@ -56,21 +57,7 @@ std::optional<PeerConf> config_from_json(const std::string& path) {
     std::string dev_name = ident["name"].asString();
     strcpy(pconf.dev_name, dev_name.data());
 
-    pconf.mapping_port = root.get("mapping_port", 11000).asInt();
-    pconf.audio_port = root.get("audio_port", 8000).asInt();
-    pconf.address = ip(
-            networking["self_ip"][0].asInt(),
-            networking["self_ip"][1].asInt(),
-            networking["self_ip"][2].asInt(),
-            networking["self_ip"][3].asInt()
-    );
-
-    pconf.netmask = ip(
-            networking["netmask"][0].asInt(),
-            networking["netmask"][1].asInt(),
-            networking["netmask"][2].asInt(),
-            networking["netmask"][3].asInt()
-    );
+    pconf.iface = networking["audio_if"].asString();
 
     return pconf;
 }
@@ -79,21 +66,32 @@ PeerConf get_default_conf() {
     const char *name = "Unknown";
 
     PeerConf conf{};
-    conf.netmask = 0x000000FF;
-    conf.address = ip(10, 0, 0, 1);
-    conf.mapping_port = 11000;
+    conf.iface = "lo";
     memcpy(&conf.dev_name, name, strlen(name));
-    conf.sample_rate = SamplingRate::SAMPLING_48K;
+    conf.sample_rate = SamplingRate::SAMPLING_96K;
     conf.dev_type = DeviceType::CONTROL_SURFACE;
     conf.uid = 1;
 
     return conf;
 }
 
-uint64_t local_now_ns() {
-    return std::chrono::duration_cast<std::chrono::nanoseconds>(
+uint64_t local_now_us() {
+    return std::chrono::duration_cast<std::chrono::microseconds>(
             std::chrono::high_resolution_clock::now().time_since_epoch()
     ).count();
+}
+
+float sig_gen(float f, int sig_level) {
+    constexpr float T = 1.0f / 96000.0f;
+    float pulse = 2.0f * 3.141592 * f;
+
+    static int n = 0;
+
+
+    float sample = (float)sin(pulse * n * T) * (float)(1 << sig_level);
+
+    n++;
+    return sample;
 }
 
 int main(int argc, char* argv[]) {
@@ -126,34 +124,26 @@ int main(int argc, char* argv[]) {
     }
 
     // AUDIO PIPES TEST
-    std::shared_ptr<UDPSocket> audio_socket = std::make_shared<UDPSocket>();
-    audio_socket->init_socket(INADDR_ANY, conf.audio_port);
-    audio_socket->set_high_prio();
+    std::shared_ptr<LowLatSocket> audio_socket = std::make_shared<LowLatSocket>(conf.uid);
+    if (!audio_socket->init_socket("enp1s0")) {
+        std::cerr << "Failed ll socket init" << std::endl;
+    }
 
     std::unique_ptr<AudioInPipe> pipe = std::make_unique<AudioInPipe>();
     auto portal = std::make_unique<AudioPortalPipe>(
-        1, ip(127, 0, 0, 1), conf.audio_port, audio_socket
+        1, 1, audio_socket
     );
 
     pipe->set_next_pipe(std::move(portal));
     pipe->set_gain_lin(100);
 
-    LowLatSocket sock{conf.uid};
-    if (!sock.init_socket("enp1s0")) {
-        std::cerr << "Failed ll socket init" << std::endl;
-    }
-
-    uint64_t last = local_now_ns();
+    uint64_t last = local_now_us();
     while(true) {
-        if (sock.send_data(0xFFFFFFFF, 2) < 0) {
-            perror("LLS Failed");
+        if (local_now_us() - last >= 10) {
+            // 1kHz gen at 0dB (24 bits)
+            pipe->acquire_sample(sig_gen(1000.0f, 24));
+            last = local_now_us();
         }
-
-        usleep(540);
-        //if (local_now_ns() - last >= 10410) {
-        //    pipe->acquire_sample((float)(0xFFFFFFFF));
-        //    last = local_now_ns();
-        //}
     }
 
     return 0;

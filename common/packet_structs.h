@@ -46,10 +46,9 @@ struct CommonHeader {
 
 struct MappingData {
     char dev_name[32];
-    uint32_t self_address;
-    uint16_t self_port;
-    DeviceType type;
+    uint64_t self_address;
     uint16_t self_uid;
+    DeviceType type;
     SamplingRate sample_rate;
     NodeTopology topo;
 };

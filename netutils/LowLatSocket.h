@@ -29,6 +29,8 @@ struct IfaceMeta {
     int idx;
 };
 
+IfaceMeta get_iface_meta(const std::string& name);
+
 class LowLatSocket {
 public:
     LowLatSocket(uint16_t self_uid);
@@ -41,6 +43,7 @@ public:
         LowLatPacket<sizeof(T)> llpck;
         llpck.eth_header = m_hdr;
         llpck.dest_uid = dest_uid;
+        llpck.sender_uid = m_self_uid;
         llpck.psize = sizeof(T);
         memcpy(llpck.payload, &data, sizeof(T));
 
@@ -52,9 +55,8 @@ public:
             sizeof(m_iface_addr)
         );
     }
-private:
-    IfaceMeta get_iface_meta(const std::string& name);
 
+private:
     sockaddr_ll m_iface_addr{};
     ethhdr m_hdr{};
 

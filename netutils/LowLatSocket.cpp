@@ -32,9 +32,11 @@ bool LowLatSocket::init_socket(std::string interface) {
     return true;
 }
 
-IfaceMeta LowLatSocket::get_iface_meta(const std::string &name) {
+IfaceMeta get_iface_meta(const std::string &name) {
     // Overflow check
     assert(name.size() <= 16);
+
+    int sock = socket(AF_INET, SOCK_DGRAM, 0);
 
     ifreq req{};
     memset(req.ifr_ifrn.ifrn_name, 0x00, 16);
@@ -42,15 +44,17 @@ IfaceMeta LowLatSocket::get_iface_meta(const std::string &name) {
 
     IfaceMeta meta{};
 
-    if (ioctl(m_socket, SIOCGIFINDEX, &req) < 0) {
+    if (ioctl(sock, SIOCGIFINDEX, &req) < 0) {
         perror("LLS Failed to get iface index");
     }
     meta.idx = req.ifr_ifru.ifru_ivalue;
 
-    if (ioctl(m_socket, SIOCGIFHWADDR, &req) < 0) {
+    if (ioctl(sock, SIOCGIFHWADDR, &req) < 0) {
         perror("LLS Failed to get iface MAC address");
     }
     memcpy(meta.mac, req.ifr_ifru.ifru_hwaddr.sa_data, 6);
+
+    close(sock);
 
     return meta;
 }

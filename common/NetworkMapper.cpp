@@ -2,7 +2,6 @@
 
 NetworkMapper::NetworkMapper(const PeerConf& pconf) {
     update_packet(pconf);
-    m_netmask = pconf.netmask;
 }
 
 NetworkMapper::~NetworkMapper() {
@@ -21,18 +20,16 @@ bool NetworkMapper::init_mapper() {
 }
 
 void NetworkMapper::update_packet(const PeerConf &pconf) {
-    m_packet.type = PacketType::MAPPING;
+    auto iface_meta = get_iface_meta(pconf.iface);
 
+    m_packet.type = PacketType::MAPPING;
     m_packet.packet_data.topo = pconf.topo;
 
     m_packet.packet_data.self_uid = pconf.uid;
     m_packet.packet_data.type = pconf.dev_type;
     m_packet.packet_data.sample_rate = pconf.sample_rate;
-    m_packet.packet_data.self_address = pconf.address;
-    m_packet.packet_data.self_port = pconf.audio_port;
+    m_packet.packet_data.self_address = 0x00000000;
     memcpy(&m_packet.packet_data.dev_name, pconf.dev_name, 32);
-
-    m_mapping_port = pconf.mapping_port;
 }
 
 void NetworkMapper::launch_mapping_process() {

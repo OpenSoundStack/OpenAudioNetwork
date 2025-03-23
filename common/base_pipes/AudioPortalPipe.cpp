@@ -1,11 +1,10 @@
 #include "AudioPortalPipe.h"
 
-AudioPortalPipe::AudioPortalPipe(uint8_t channel, uint32_t ip, uint16_t port, const std::shared_ptr<LowLatSocket>& iface) {
+AudioPortalPipe::AudioPortalPipe(uint8_t channel, uint16_t dest_uid, const std::shared_ptr<LowLatSocket>& iface) {
     m_channel_no = channel;
     m_dest_sock = iface;
 
-    m_dest_ip = ip;
-    m_dest_port = port;
+    m_dest_uid = dest_uid;
 
     m_portal_packet = {};
     m_portal_packet.type = PacketType::AUDIO;
@@ -25,7 +24,7 @@ void AudioPortalPipe::acquire_sample(float sample) {
 }
 
 void AudioPortalPipe::push_packet() {
-    if (m_dest_sock->send_data(&m_portal_packet, 1, m_dest_ip, m_dest_port) < 0) {
+    if (m_dest_sock->send_data(m_portal_packet, m_dest_uid) < 0) {
         std::cerr << "FAIL" << std::endl;
     }
 }
