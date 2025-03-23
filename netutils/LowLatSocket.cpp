@@ -1,10 +1,12 @@
 #include "LowLatSocket.h"
+#include "common/NetworkMapper.h"
 
-LowLatSocket::LowLatSocket(uint16_t self_uid) {
+LowLatSocket::LowLatSocket(uint16_t self_uid, std::shared_ptr<NetworkMapper> mapper) {
     m_socket = 0;
     m_iface_addr = {};
 
     m_self_uid = self_uid;
+    m_mapper = std::move(mapper);
 }
 
 LowLatSocket::~LowLatSocket() {
@@ -31,6 +33,11 @@ bool LowLatSocket::init_socket(std::string interface, EthProtocol proto) {
 
     return true;
 }
+
+std::optional<uint64_t> LowLatSocket::get_mac(uint16_t id) {
+    return m_mapper->get_mac_by_uid(id);
+}
+
 
 IfaceMeta get_iface_meta(const std::string &name) {
     // Overflow check

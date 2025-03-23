@@ -6,8 +6,8 @@
 #include <thread>
 #include <unordered_map>
 #include <algorithm>
+#include <optional>
 
-#include "netutils/udp.h"
 #include "netutils/LowLatSocket.h"
 #include "packet_structs.h"
 
@@ -25,6 +25,8 @@ public:
 
     bool init_mapper(const std::string& iface);
     void launch_mapping_process();
+
+    std::optional<uint64_t> get_mac_by_uid(uint16_t uid);
 
     static uint64_t local_now();
 private:

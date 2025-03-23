@@ -7,7 +7,7 @@
   },
 
   "networking": {
-    "audio_if": "enxd0c0bf2f12a8"
+    "audio_if": "virbr0"
   },
 
   "topology": {

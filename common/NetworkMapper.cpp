@@ -9,8 +9,7 @@ NetworkMapper::~NetworkMapper() {
 }
 
 bool NetworkMapper::init_mapper(const std::string& iface) {
-    m_map_socket = std::make_unique<LowLatSocket>(m_packet.packet_data.self_uid);
-
+    m_map_socket = std::make_unique<LowLatSocket>(m_packet.packet_data.self_uid, std::shared_ptr<NetworkMapper>{});
     bool res = m_map_socket->init_socket(iface, EthProtocol::ETH_PROTO_OANDISCO);
 
     return res;
@@ -114,6 +113,14 @@ void NetworkMapper::process_packet(MappingPacket pck) {
             std::lock_guard<std::mutex> m{m_mapper_mutex};
             m_peers[pck.packet_data.self_uid] = {pck.packet_data, now};
         }
+    }
+}
+
+std::optional<uint64_t> NetworkMapper::get_mac_by_uid(uint16_t uid) {
+    if (m_peers.contains(uid)) {
+        return m_peers[uid].peer_data.self_address;
+    } else {
+        return {};
     }
 }
 

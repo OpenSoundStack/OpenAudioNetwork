@@ -115,18 +115,18 @@ int main(int argc, char* argv[]) {
     }
 
     // Init auto-discover mechanism
-    NetworkMapper nmapper{conf};
+    std::shared_ptr<NetworkMapper> nmapper = std::make_shared<NetworkMapper>(conf);
 
     std::cout << "Initializing on " << conf.iface << std::endl;
-    if(nmapper.init_mapper(conf.iface)) {
-        nmapper.launch_mapping_process();
+    if(nmapper->init_mapper(conf.iface)) {
+        nmapper->launch_mapping_process();
     } else {
         std::cerr << "Failed to init mapper" << std::endl;
         exit(-1);
     }
 
     // AUDIO PIPES TEST
-    std::shared_ptr<LowLatSocket> audio_socket = std::make_shared<LowLatSocket>(conf.uid);
+    std::shared_ptr<LowLatSocket> audio_socket = std::make_shared<LowLatSocket>(conf.uid, nmapper);
     if (!audio_socket->init_socket("enp1s0", EthProtocol::ETH_PROTO_OANAUDIO)) {
         std::cerr << "Failed ll socket init" << std::endl;
     }
@@ -137,13 +137,13 @@ int main(int argc, char* argv[]) {
     );
 
     pipe->set_next_pipe(std::move(portal));
-    pipe->set_gain_lin(100);
+    pipe->set_gain_lin(1);
 
     uint64_t last = local_now_us();
     while(true) {
         if (local_now_us() - last >= 10) {
             // 1kHz gen at 0dB (24 bits)
-            //pipe->acquire_sample(sig_gen(1000.0f, 24));
+            pipe->acquire_sample(sig_gen(1000.0f, 24));
             last = local_now_us();
         }
     }

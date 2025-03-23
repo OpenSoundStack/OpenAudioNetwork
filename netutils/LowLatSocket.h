@@ -5,6 +5,8 @@
 #include <iostream>
 #include <cstring>
 #include <cassert>
+#include <memory>
+#include <optional>
 
 #include <linux/if_packet.h>
 #include <linux/if_ether.h>
@@ -37,9 +39,10 @@ struct IfaceMeta {
 
 IfaceMeta get_iface_meta(const std::string& name);
 
+class NetworkMapper;
 class LowLatSocket {
 public:
-    LowLatSocket(uint16_t self_uid);
+    LowLatSocket(uint16_t self_uid, std::shared_ptr<NetworkMapper> mapper);
     ~LowLatSocket();
 
     bool init_socket(std::string interface, EthProtocol proto);
@@ -52,6 +55,17 @@ public:
         llpck.sender_uid = m_self_uid;
         llpck.psize = sizeof(T);
         memcpy(llpck.payload, &data, sizeof(T));
+
+        if (dest_uid != 0) {
+            auto mac = get_mac(dest_uid);
+            if (mac.has_value()) {
+                uint64_t& v = mac.value();
+                memcpy(llpck.eth_header.h_dest, &v, 6);
+            } else {
+                std::cerr << "Trying to send data to unknown UID (" << (int)dest_uid << ")." << std::endl;
+                return 0;
+            }
+        }
 
         return sendto(
             m_socket,
@@ -68,11 +82,15 @@ public:
     }
 
 private:
+    std::optional<uint64_t> get_mac(uint16_t id);
+
     sockaddr_ll m_iface_addr{};
     ethhdr m_hdr{};
 
     int m_socket;
     uint16_t m_self_uid;
+
+    std::shared_ptr<NetworkMapper> m_mapper;
 };
 
 
