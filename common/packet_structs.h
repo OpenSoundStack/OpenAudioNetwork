@@ -5,6 +5,8 @@
 
 #include "audio_conf.h"
 
+#define AUDIO_DATA_SAMPLES_PER_PACKETS 64
+
 enum class PacketType : uint32_t {
     MAPPING,
     CONTROL,
@@ -62,7 +64,7 @@ struct ControlData {
 
 struct AudioData {
     uint8_t channel;
-    float samples[64];
+    float samples[AUDIO_DATA_SAMPLES_PER_PACKETS];
 };
 
 typedef CommonHeader<MappingData> MappingPacket;

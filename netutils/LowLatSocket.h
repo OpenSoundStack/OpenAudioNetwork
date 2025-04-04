@@ -20,12 +20,16 @@ enum EthProtocol : uint16_t {
     ETH_PROTO_OANDISCO = 0x0682
 };
 
-template<class T>
-struct LowLatPacket {
-    ethhdr eth_header;
+struct LowLatHeader {
     uint16_t sender_uid;
     uint16_t dest_uid;
     uint16_t psize;
+} __attribute__((packed));
+
+template<class T>
+struct LowLatPacket {
+    ethhdr eth_header;
+    LowLatHeader llhdr;
     T payload;
 } __attribute__((packed));
 
@@ -51,9 +55,9 @@ public:
     int send_data(const T& data, uint16_t dest_uid) {
         INT_LLP<sizeof(T)> llpck;
         llpck.eth_header = m_hdr;
-        llpck.dest_uid = dest_uid;
-        llpck.sender_uid = m_self_uid;
-        llpck.psize = sizeof(T);
+        llpck.llhdr.dest_uid = dest_uid;
+        llpck.llhdr.sender_uid = m_self_uid;
+        llpck.llhdr.psize = sizeof(T);
         memcpy(llpck.payload, &data, sizeof(T));
 
         if (dest_uid != 0) {
@@ -62,7 +66,7 @@ public:
                 uint64_t& v = mac.value();
                 memcpy(llpck.eth_header.h_dest, &v, 6);
             } else {
-                std::cerr << "Trying to send data to unknown UID (" << (int)dest_uid << ")." << std::endl;
+                //std::cerr << "Trying to send data to unknown UID (" << (int)dest_uid << ")." << std::endl;
                 return 0;
             }
         }
