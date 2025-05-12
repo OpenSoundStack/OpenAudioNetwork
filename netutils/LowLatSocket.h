@@ -17,7 +17,8 @@
 
 enum EthProtocol : uint16_t {
     ETH_PROTO_OANAUDIO = 0x0681,
-    ETH_PROTO_OANDISCO = 0x0682
+    ETH_PROTO_OANDISCO = 0x0682,
+    ETH_PROTO_OANCONTROL = 0x0683
 };
 
 struct LowLatHeader {
