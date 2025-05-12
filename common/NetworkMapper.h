@@ -7,6 +7,7 @@
 #include <unordered_map>
 #include <algorithm>
 #include <optional>
+#include <mutex>
 
 #include "netutils/LowLatSocket.h"
 #include "packet_structs.h"

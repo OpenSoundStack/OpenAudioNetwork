@@ -4,4 +4,4 @@ add_library(oannetutils STATIC
         LowLatSocket.cpp
         LowLatSocket.h
 )
-target_include_directories(oannetutils PUBLIC ${CMAKE_SOURCE_DIR})
+target_include_directories(oannetutils PUBLIC ${PROJECT_SOURCE_DIR})

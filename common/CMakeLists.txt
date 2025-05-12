@@ -17,4 +17,4 @@ add_library(oancommon
 )
 
 target_link_libraries(oancommon PUBLIC oannetutils)
-target_include_directories(oancommon PUBLIC ${CMAKE_SOURCE_DIR})
+target_include_directories(oancommon PUBLIC ${PROJECT_SOURCE_DIR})

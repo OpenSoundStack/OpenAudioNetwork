@@ -16,7 +16,8 @@ enum class PacketType : uint32_t {
 enum class DeviceType : uint32_t {
     CONTROL_SURFACE,
     MONITORING,
-    AUDIO_IO_INTERFACE
+    AUDIO_IO_INTERFACE,
+    AUDIO_DSP
 };
 
 enum class DataTypes : uint8_t {
