@@ -14,6 +14,8 @@ add_library(oancommon
         base_pipes/AudioPortalRxPipe.h
         base_pipes/LevelMeasurePipe.cpp
         base_pipes/LevelMeasurePipe.h
+        AudioRouter.cpp
+        AudioRouter.h
 )
 
 target_link_libraries(oancommon PUBLIC oannetutils)
