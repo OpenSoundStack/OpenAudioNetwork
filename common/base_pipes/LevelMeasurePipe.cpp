@@ -14,7 +14,7 @@ void LevelMeasurePipe::process_sample(float sample) {
     m_sum += abs(sample);
 
     value_counter++;
-    if (value_counter > 200) {
+    if (value_counter > 960) {
         float mean = m_sum / value_counter;
         float mean_db = 20 * std::log10(mean / max_level);
 
