@@ -19,6 +19,7 @@ public:
 
     void set_channel(uint8_t channel);
     uint8_t get_channel();
+
 protected:
     void forward_sample(AudioPacket& pck);
     virtual float process_sample(float sample);
