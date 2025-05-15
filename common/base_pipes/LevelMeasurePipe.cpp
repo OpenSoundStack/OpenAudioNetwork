@@ -7,7 +7,7 @@ LevelMeasurePipe::LevelMeasurePipe() {
 }
 
 
-void LevelMeasurePipe::process_sample(float sample) {
+float LevelMeasurePipe::process_sample(float sample) {
     static int value_counter = 0;
     constexpr float max_level = (float)(1 << 24);
 
@@ -24,6 +24,6 @@ void LevelMeasurePipe::process_sample(float sample) {
         m_sum = 0.0f;
     }
 
-    forward_sample(sample);
+    return sample;
 }
 

@@ -10,7 +10,7 @@ public:
     LevelMeasurePipe();
     virtual ~LevelMeasurePipe() = default;
 
-    void process_sample(float sample) override;
+    float process_sample(float sample) override;
 
 private:
     float m_sum;
