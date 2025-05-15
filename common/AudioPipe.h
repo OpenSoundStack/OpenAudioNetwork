@@ -12,7 +12,7 @@ public:
     virtual ~AudioPipe() = default;
 
     void feed_packet(AudioPacket& pck);
-    void set_next_pipe(std::unique_ptr<AudioPipe>&& pipe);
+    void set_next_pipe(const std::shared_ptr<AudioPipe>& pipe);
 
     bool is_pipe_enabled() const;
     void set_pipe_enabled(bool en);
@@ -24,7 +24,7 @@ protected:
     virtual float process_sample(float sample);
 
 private:
-    std::optional<std::unique_ptr<AudioPipe>> m_next_pipe;
+    std::optional<std::shared_ptr<AudioPipe>> m_next_pipe;
 
     // Pipe meta info
     bool m_pipe_enabled;

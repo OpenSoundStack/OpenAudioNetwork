@@ -33,8 +33,8 @@ void AudioPipe::forward_sample(AudioPacket& pck) {
     }
 }
 
-void AudioPipe::set_next_pipe(std::unique_ptr<AudioPipe>&& pipe) {
-    m_next_pipe = std::move(pipe);
+void AudioPipe::set_next_pipe(const std::shared_ptr<AudioPipe>& pipe) {
+    m_next_pipe = pipe;
 }
 
 bool AudioPipe::is_pipe_enabled() const {
