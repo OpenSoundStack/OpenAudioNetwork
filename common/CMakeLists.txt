@@ -8,10 +8,6 @@ add_library(oancommon
         AudioPipe.h
         base_pipes/AudioInPipe.cpp
         base_pipes/AudioInPipe.h
-        base_pipes/AudioPortalPipe.cpp
-        base_pipes/AudioPortalPipe.h
-        base_pipes/AudioPortalRxPipe.cpp
-        base_pipes/AudioPortalRxPipe.h
         base_pipes/LevelMeasurePipe.cpp
         base_pipes/LevelMeasurePipe.h
         AudioRouter.cpp
