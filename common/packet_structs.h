@@ -18,6 +18,7 @@ enum class PacketType : uint32_t {
     MAPPING,            /**< Mapping packet @see MappingData */
     CONTROL,            /**< Show control packets */
     CONTROL_CREATE,     /**< Pipe creation packets */
+    CONTROL_RESPONSE,   /**< Response to a control command */
     AUDIO               /**< Audio data packets */
 };
 
