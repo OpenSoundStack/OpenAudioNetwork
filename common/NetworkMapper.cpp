@@ -18,7 +18,7 @@ bool NetworkMapper::init_mapper(const std::string& iface) {
 void NetworkMapper::update_packet(const PeerConf &pconf) {
     auto iface_meta = get_iface_meta(pconf.iface);
 
-    m_packet.type = PacketType::MAPPING;
+    m_packet.header.type = PacketType::MAPPING;
     m_packet.packet_data.topo = pconf.topo;
 
     m_packet.packet_data.self_uid = pconf.uid;
@@ -65,7 +65,7 @@ void NetworkMapper::packet_receiver() {
     while(true) {
         m_map_socket->receive_data(&pck, false);
 
-        if(pck.payload.type == PacketType::MAPPING) {
+        if(pck.payload.header.type == PacketType::MAPPING) {
             process_packet(pck.payload);
         }
     }

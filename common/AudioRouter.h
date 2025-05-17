@@ -12,15 +12,22 @@ public:
     ~AudioRouter() = default;
 
     void poll_audio_data();
+    void poll_control_packets();
+
     void send_audio_packet(const AudioPacket &packet, uint16_t dest_uid);
+    void send_control_packet_response(const ControlResponsePacket& packet, uint16_t dest_uid);
 
-    void set_routing_callback(std::function<void(AudioPacket&)> callback);
-
+    void set_routing_callback(const std::function<void(AudioPacket&)> &callback);
+    void set_control_callback(const std::function<void(ControlPacket&)>& callback);
+    void set_pipe_create_callback(const std::function<void(ControlPipeCreatePacket&)>& callback);
 private:
     std::unique_ptr<LowLatSocket> m_audio_iface;
+    std::unique_ptr<LowLatSocket> m_control_iface;
     uint16_t m_self_uid;
 
     std::function<void(AudioPacket&)> m_routing_callback;
+    std::function<void(ControlPacket&)> m_channel_control_callback;
+    std::function<void(ControlPipeCreatePacket&)> m_pipe_create_callback;
 };
 
 

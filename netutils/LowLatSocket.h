@@ -86,6 +86,10 @@ public:
         return recv(m_socket, data, sizeof(T), async ? MSG_DONTWAIT : 0);
     }
 
+    int receive_data_raw(char* data, size_t size, bool async = true) const {
+        return recv(m_socket, data, size, async ? MSG_DONTWAIT : 0);
+    }
+
 private:
     std::optional<uint64_t> get_mac(uint16_t id);
 
