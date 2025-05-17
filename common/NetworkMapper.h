@@ -14,27 +14,61 @@
 
 #include "peer/peer_conf.h"
 
+/**
+ * @struct PeerInfos
+ * @brief Stores other visible devices infos
+ */
 struct PeerInfos {
-    MappingData peer_data;
-    uint64_t alive_stamp;
+    MappingData peer_data;  /**< Device infos */
+    uint64_t alive_stamp;   /**< Last alive message timestamp */
 };
 
+/**
+ * @class NetworkMapper
+ * @brief Establishes a network map of all the visible OAN devices in LAN.
+ */
 class NetworkMapper {
 public:
+    /**
+     * Constructor
+     * @param pconf Default self configuration
+     */
     NetworkMapper(const PeerConf& pconf);
     ~NetworkMapper();
 
+    /**
+     * Network Mapper initialization
+     * @param iface Physical network interface name to start the mapping on
+     * @return true if initialization succeeds
+     */
     bool init_mapper(const std::string& iface);
+
+    /**
+     * Launch two threads which scan and map the network
+     */
     void launch_mapping_process();
 
+    /**
+     * Find a device MAC address based on its UID.
+     * @param uid UID to find
+     * @return If found, the corresponding MAC address.
+     */
     std::optional<uint64_t> get_mac_by_uid(uint16_t uid);
 
+    /**
+     * Get the local UNIX time in µs
+     * @return Local UNIX time in µs
+     */
     static uint64_t local_now();
 private:
     void packet_sender();
     void packet_receiver();
     void mapper_process();
 
+    /**
+     * Updated the default configuration
+     * @param pconf New default configuration
+     */
     void update_packet(const PeerConf& pconf);
 
     void process_packet(MappingPacket pck);
