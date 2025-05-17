@@ -6,12 +6,25 @@
 
 #include "packet_structs.h"
 
+/**
+ * @class AudioPipe
+ * @brief Represents a list of pipe elements. Each pipe element does one processing. The whole pipeline forms the processing chain.
+ */
 class AudioPipe {
 public:
     AudioPipe();
     virtual ~AudioPipe() = default;
 
+    /**
+     * Push an audio packet in the pipe
+     * @param pck An audio packet
+     */
     void feed_packet(AudioPacket& pck);
+
+    /**
+     * Install nex pipe element in chain
+     * @param pipe Next pipe
+     */
     void set_next_pipe(const std::shared_ptr<AudioPipe>& pipe);
 
     bool is_pipe_enabled() const;
@@ -21,7 +34,17 @@ public:
     uint8_t get_channel();
 
 protected:
+    /**
+     * Sends processed audio to the next pipe element
+     * @param pck Processed audio packet
+     */
     void forward_sample(AudioPacket& pck);
+
+    /**
+     * Process a unique sample
+     * @param sample Audio sample
+     * @return The processed sample
+     */
     virtual float process_sample(float sample);
 
 private:
