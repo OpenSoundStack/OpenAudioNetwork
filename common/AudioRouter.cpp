@@ -63,11 +63,11 @@ void AudioRouter::set_routing_callback(const std::function<void(AudioPacket &)> 
     m_routing_callback = callback;
 }
 
-void AudioRouter::set_control_callback(const std::function<void(ControlData &)>& callback) {
+void AudioRouter::set_control_callback(const std::function<void(ControlPacket&)>& callback) {
     m_channel_control_callback = callback;
 }
 
-void AudioRouter::set_pipe_create_callback(const std::function<void(ControlPipeCreate &)>& callback) {
+void AudioRouter::set_pipe_create_callback(const std::function<void(ControlPipeCreatePacket &)>& callback) {
     m_pipe_create_callback = callback;
 }
 
