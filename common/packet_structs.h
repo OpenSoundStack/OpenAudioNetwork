@@ -117,7 +117,7 @@ struct MappingData {
  */
 struct ControlPipeCreate {
     uint8_t channel;          /**<  Channel to alter */
-    uint8_t stack_position;   /**< Insertion position in pipe */
+    uint8_t stack_position;   /**< Position in pipe */
     uint8_t seq;              /**< Sequence number */
     uint8_t seq_max;          /**< Expected packet count for the whole creation instruction */
     char elem_type[32];       /**< Element type name to create */
@@ -139,9 +139,9 @@ struct ControlData {
  * @brief Error management in control frames. Especially for pipe creation.
  */
 struct ControlResponse {
-    ControlResponseCode response;
-    uint8_t seq;
-    char err_msg[64];
+    uint8_t response;             /**< Response code */
+    uint8_t channel;              /**< Channel affected */
+    char err_msg[64];             /**< Error message */
 };
 
 /**
