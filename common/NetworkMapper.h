@@ -56,6 +56,38 @@ public:
     std::optional<uint64_t> get_mac_by_uid(uint16_t uid);
 
     /**
+     * Update self resource mapping
+     * @param topo New topology
+     */
+    void update_resource_mapping(NodeTopology topo);
+
+    /**
+     * Update local memory about pipe resource mapping
+     * @param topo Temporary deduced topology of peer
+     */
+    void update_peer_resource_mapping(NodeTopology topo, uint16_t peer_uid);
+
+    /**
+     * Finds a DSP Device in the network that has space for new pipes
+     * @return If found, DSP ID
+     */
+    std::optional<uint16_t> find_free_dsp() const;
+
+    /**
+     * Finds a free processing channel in a given device
+     * @param uid Device to search on
+     * @return If found, channel index
+     */
+    std::optional<uint8_t> first_free_processing_channel(uint16_t uid);
+
+    /**
+     * Finds given device topology
+     * @param peer_uid Device to search
+     * @return If found, device topology
+     */
+    std::optional<NodeTopology> get_device_topo(uint16_t peer_uid);
+
+    /**
      * Get the local UNIX time in µs
      * @return Local UNIX time in µs
      */

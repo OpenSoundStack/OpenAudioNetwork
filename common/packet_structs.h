@@ -34,6 +34,15 @@ enum class DeviceType : uint32_t {
 };
 
 /**
+ * @enum ControlQueryType
+ * @brief Defines the query types you can send to a device
+ */
+enum class ControlQueryType : uint32_t {
+    PHY_OUT_MAP,        /**< Get the map of free physical out in the device */
+    PIPES_MAP           /**< Get the map of free processing pipes in the device */
+};
+
+/**
  * @enum DataTypes
  * Data type enum for the ControlPacket
  */
@@ -74,6 +83,9 @@ struct NodeTopology {
     uint8_t phy_in_count;   /**< Physical input count */
     uint8_t phy_out_count;  /**< Physical output count */
     uint8_t pipes_count;    /**< Available processing pipes */
+
+    uint64_t phy_out_resmap;
+    uint64_t pipe_resmap;
 };
 
 /**
@@ -85,7 +97,7 @@ struct CommonHeader {
     uint16_t version;       /**< Protocol version */
     uint16_t flags;         /**< Header flags (currently unused) */
     uint64_t timestamp;     /**< Packet timestamp, used only for audio packets */
-};
+} __attribute__((packed));
 
 /**
  * @struct OANPacket
@@ -141,7 +153,18 @@ struct ControlData {
 struct ControlResponse {
     uint8_t response;             /**< Response code */
     uint8_t channel;              /**< Channel affected */
+    uint64_t resource_map;        /**< Resource map update */
     char err_msg[64];             /**< Error message */
+};
+
+/**
+ * @struct ControlQuery
+ * @brief Query useful infos to any device
+ */
+struct ControlQuery {
+    ControlQueryType qtype;     /**< Type of the query */
+    uint32_t flags;             /**< Additional flags */
+    uint32_t response[4];       /**< Device response */
 };
 
 /**
@@ -158,5 +181,6 @@ typedef OANPacket<AudioData> AudioPacket;                       /**< Full OAN Pa
 typedef OANPacket<ControlData> ControlPacket;                   /**< Full OAN Packet for control data */
 typedef OANPacket<ControlPipeCreate> ControlPipeCreatePacket;   /**< Full OAN Packet for pipe creation */
 typedef OANPacket<ControlResponse> ControlResponsePacket;       /**< Full OAN Packet for control response */
+typedef OANPacket<ControlQuery> ControlQueryPacket;             /**< Full OAN Packet for control query */
 
 #endif //OPENAUDIONETWORK_PACKET_STRUCTS_H

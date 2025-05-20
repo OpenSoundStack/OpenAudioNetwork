@@ -124,8 +124,64 @@ std::optional<uint64_t> NetworkMapper::get_mac_by_uid(uint16_t uid) {
     }
 }
 
+void NetworkMapper::update_peer_resource_mapping(NodeTopology topo, uint16_t peer_uid) {
+    if (m_peers.contains(peer_uid)) {
+        std::lock_guard<std::mutex> m{m_mapper_mutex};
+        auto peer_infos = m_peers[peer_uid];
+        peer_infos.peer_data.topo = topo;
+    } else {
+        return;
+    }
+}
+
+void NetworkMapper::update_resource_mapping(NodeTopology topo) {
+    std::lock_guard<std::mutex> m{m_mapper_mutex};
+    m_packet.packet_data.topo = topo;
+}
+
+std::optional<uint16_t> NetworkMapper::find_free_dsp() const {
+    for (auto peer : m_peers) {
+        PeerInfos infos = peer.second;
+
+        // Each bit in the resource map represent a channel, 1 if used, 0 if not. If the pipe resource map is 0
+        // then there are no free channels
+        if (infos.peer_data.type == DeviceType::AUDIO_DSP && infos.peer_data.topo.pipe_resmap != 0) {
+            return infos.peer_data.self_uid;
+        }
+    }
+
+    return {};
+}
+
+std::optional<uint8_t> NetworkMapper::first_free_processing_channel(uint16_t uid) {
+    if (m_peers.contains(uid)) {
+        PeerInfos infos = m_peers[uid];
+
+        uint64_t resmap = infos.peer_data.topo.pipe_resmap;
+        for (int i = 0; i < 64; i++) {
+            if (resmap & 0x01) {
+                return i;
+            }
+
+            resmap >>= 1;
+        }
+    }
+
+    return {};
+}
+
+
 uint64_t NetworkMapper::local_now() {
     return std::chrono::duration_cast<std::chrono::milliseconds>(
             std::chrono::high_resolution_clock::now().time_since_epoch()
     ).count();
 }
+
+std::optional<NodeTopology> NetworkMapper::get_device_topo(uint16_t peer_uid) {
+    if (m_peers.contains(peer_uid)) {
+        return m_peers[peer_uid].peer_data.topo;
+    } else {
+        return {};
+    }
+}
+

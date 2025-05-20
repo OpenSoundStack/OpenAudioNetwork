@@ -63,14 +63,14 @@ void AudioRouter::poll_control_packets(bool async) {
 
             // Extracting packet
             packet_content.header = header.payload;
-            memcpy(&packet_content, raw_packet_buffer + sizeof(LowLatPacket<CommonHeader>), sizeof(ControlData));
+            memcpy(&packet_content.packet_data, raw_packet_buffer + sizeof(LowLatPacket<CommonHeader>), sizeof(ControlData));
 
             m_channel_control_callback(packet_content, header.llhdr);
         } else if (header.payload.type == PacketType::CONTROL_RESPONSE) {
             ControlResponsePacket packet_content{};
 
             packet_content.header = header.payload;
-            memcpy(&packet_content, raw_packet_buffer + sizeof(LowLatPacket<CommonHeader>), sizeof(ControlResponse));
+            memcpy(&packet_content.packet_data, raw_packet_buffer + sizeof(LowLatPacket<CommonHeader>), sizeof(ControlResponse));
 
             m_control_response_callback(packet_content, header.llhdr);
         }
