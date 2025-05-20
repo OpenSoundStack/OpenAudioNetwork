@@ -34,11 +34,11 @@ void AudioRouter::poll_audio_data() {
     }
 }
 
-void AudioRouter::poll_control_packets() {
+void AudioRouter::poll_control_packets(bool async) {
     char raw_packet_buffer[256] = {0};
     LowLatPacket<CommonHeader> header{};
 
-    int recv_bytes = m_control_iface->receive_data_raw(raw_packet_buffer, 128);
+    int recv_bytes = m_control_iface->receive_data_raw(raw_packet_buffer, 128, async);
 
     if (recv_bytes <= 0) {
         return;
@@ -66,6 +66,13 @@ void AudioRouter::poll_control_packets() {
             memcpy(&packet_content, raw_packet_buffer + sizeof(LowLatPacket<CommonHeader>), sizeof(ControlData));
 
             m_channel_control_callback(packet_content, header.llhdr);
+        } else if (header.payload.type == PacketType::CONTROL_RESPONSE) {
+            ControlResponsePacket packet_content{};
+
+            packet_content.header = header.payload;
+            memcpy(&packet_content, raw_packet_buffer + sizeof(LowLatPacket<CommonHeader>), sizeof(ControlResponse));
+
+            m_control_response_callback(packet_content, header.llhdr);
         }
     }
 }
@@ -91,3 +98,6 @@ void AudioRouter::set_pipe_create_callback(const std::function<void(ControlPipeC
     m_pipe_create_callback = callback;
 }
 
+void AudioRouter::set_control_response_callback(const std::function<void(ControlResponsePacket &, LowLatHeader &)> &callback) {
+    m_control_response_callback = callback;
+}
