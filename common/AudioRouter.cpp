@@ -81,11 +81,6 @@ void AudioRouter::send_audio_packet(const AudioPacket &packet, uint16_t dest_uid
     m_audio_iface->send_data(packet, dest_uid);
 }
 
-void AudioRouter::send_control_packet_response(const ControlResponsePacket &packet, uint16_t dest_uid) {
-    m_control_iface->send_data(packet, dest_uid);
-}
-
-
 void AudioRouter::set_routing_callback(const std::function<void(AudioPacket&, LowLatHeader&)> &callback) {
     m_routing_callback = callback;
 }

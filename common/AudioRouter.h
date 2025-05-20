@@ -17,7 +17,11 @@ public:
     void poll_control_packets(bool async = true);
 
     void send_audio_packet(const AudioPacket &packet, uint16_t dest_uid);
-    void send_control_packet_response(const ControlResponsePacket& packet, uint16_t dest_uid);
+
+    template<class T>
+    void send_control_packet(const T& pck, uint16_t dest_uid) {
+        m_control_iface->send_data(pck, dest_uid);
+    }
 
     void set_routing_callback(const std::function<void(AudioPacket&, LowLatHeader&)> &callback);
     void set_control_callback(const std::function<void(ControlPacket&, LowLatHeader&)>& callback);
