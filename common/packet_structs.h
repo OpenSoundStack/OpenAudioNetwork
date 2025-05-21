@@ -39,7 +39,8 @@ enum class DeviceType : uint32_t {
  */
 enum class ControlQueryType : uint32_t {
     PHY_OUT_MAP,        /**< Get the map of free physical out in the device */
-    PIPES_MAP           /**< Get the map of free processing pipes in the device */
+    PIPES_MAP,          /**< Get the map of free processing pipes in the device */
+    PIPE_ALLOC_RESET,   /**< Reset pipes and channel allocator in device */
 };
 
 /**
