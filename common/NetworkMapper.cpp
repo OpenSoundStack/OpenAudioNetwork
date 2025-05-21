@@ -170,7 +170,6 @@ std::optional<uint8_t> NetworkMapper::first_free_processing_channel(uint16_t uid
     return {};
 }
 
-
 uint64_t NetworkMapper::local_now() {
     return std::chrono::duration_cast<std::chrono::milliseconds>(
             std::chrono::high_resolution_clock::now().time_since_epoch()

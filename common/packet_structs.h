@@ -61,7 +61,8 @@ enum ControlResponseCode : uint8_t {
     CREATE_OK = 1 << 0,
     CREATE_ERROR = 1 << 1,
     CONTROL_ACK = 1 << 2,
-    CREATE_TYPE_UNK = 1 << 3
+    CREATE_TYPE_UNK = 1 << 3,
+    CREATE_ALLOC_FAILED = 1 << 4, /**< Resource allocation failed on pipe creation */
 };
 
 /**
@@ -153,7 +154,6 @@ struct ControlData {
 struct ControlResponse {
     uint8_t response;             /**< Response code */
     uint8_t channel;              /**< Channel affected */
-    uint64_t resource_map;        /**< Resource map update */
     char err_msg[64];             /**< Error message */
 };
 
