@@ -19,6 +19,7 @@ enum class PacketType : uint32_t {
     CONTROL,            /**< Show control packets */
     CONTROL_CREATE,     /**< Pipe creation packets */
     CONTROL_RESPONSE,   /**< Response to a control command */
+    CONTROL_QUERY,      /**< Device request */
     AUDIO               /**< Audio data packets */
 };
 
@@ -64,6 +65,7 @@ enum ControlResponseCode : uint8_t {
     CONTROL_ACK = 1 << 2,
     CREATE_TYPE_UNK = 1 << 3,
     CREATE_ALLOC_FAILED = 1 << 4, /**< Resource allocation failed on pipe creation */
+    CONTROL_ERROR,                /**< Control generic error */
 };
 
 /**

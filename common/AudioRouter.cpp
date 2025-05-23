@@ -50,6 +50,7 @@ void AudioRouter::poll_control_packets(bool async) {
             return;
         }
 
+        // Packet switching
         if (header.payload.type == PacketType::CONTROL_CREATE) {
             ControlPipeCreatePacket packet_content{};
 
@@ -73,6 +74,14 @@ void AudioRouter::poll_control_packets(bool async) {
             memcpy(&packet_content.packet_data, raw_packet_buffer + sizeof(LowLatPacket<CommonHeader>), sizeof(ControlResponse));
 
             m_control_response_callback(packet_content, header.llhdr);
+        } else if (header.payload.type == PacketType::CONTROL_QUERY) {
+            ControlQueryPacket packet_content{};
+
+            // Extracting packet
+            packet_content.header = header.payload;
+            memcpy(&packet_content.packet_data, raw_packet_buffer + sizeof(LowLatPacket<CommonHeader>), sizeof(ControlQuery));
+
+            m_control_query_callback(packet_content, header.llhdr);
         }
     }
 }
@@ -96,3 +105,8 @@ void AudioRouter::set_pipe_create_callback(const std::function<void(ControlPipeC
 void AudioRouter::set_control_response_callback(const std::function<void(ControlResponsePacket &, LowLatHeader &)> &callback) {
     m_control_response_callback = callback;
 }
+
+void AudioRouter::set_control_query_callback(const std::function<void(ControlQueryPacket &, LowLatHeader &)> &callback) {
+    m_control_query_callback = callback;
+}
+

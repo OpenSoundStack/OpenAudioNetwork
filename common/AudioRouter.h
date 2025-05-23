@@ -27,6 +27,7 @@ public:
     void set_control_callback(const std::function<void(ControlPacket&, LowLatHeader&)>& callback);
     void set_control_response_callback(const std::function<void(ControlResponsePacket&, LowLatHeader&)>& callback);
     void set_pipe_create_callback(const std::function<void(ControlPipeCreatePacket&, LowLatHeader&)>& callback);
+    void set_control_query_callback(const std::function<void(ControlQueryPacket&, LowLatHeader&)>& callback);
 private:
     std::unique_ptr<LowLatSocket> m_audio_iface;
     std::unique_ptr<LowLatSocket> m_control_iface;
@@ -37,6 +38,7 @@ protected:
     std::function<void(ControlPacket&, LowLatHeader&)> m_channel_control_callback;
     std::function<void(ControlPipeCreatePacket&, LowLatHeader&)> m_pipe_create_callback;
     std::function<void(ControlResponsePacket&, LowLatHeader&)> m_control_response_callback;
+    std::function<void(ControlQueryPacket&, LowLatHeader&)> m_control_query_callback;
 };
 
 
