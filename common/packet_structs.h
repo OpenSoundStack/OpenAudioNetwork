@@ -142,6 +142,7 @@ struct ControlPipeCreate {
 /**
  * @struct ControlData
  * @brief Pipe control packet type.
+ * Control 0 is reserved for channel level data
  */
 struct ControlData {
     uint8_t channel;          /**< Channel of the pipe */
