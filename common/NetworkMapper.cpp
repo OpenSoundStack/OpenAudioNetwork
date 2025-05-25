@@ -184,3 +184,15 @@ std::optional<NodeTopology> NetworkMapper::get_device_topo(uint16_t peer_uid) {
     }
 }
 
+std::vector<uint16_t> NetworkMapper::find_all_control_surfaces() {
+    std::vector<uint16_t> surfaces;
+
+    for (auto& device : m_peers) {
+        if (device.second.peer_data.type == DeviceType::CONTROL_SURFACE) {
+            surfaces.push_back(device.first);
+        }
+    }
+
+    return surfaces;
+}
+

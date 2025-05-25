@@ -88,6 +88,12 @@ public:
     std::optional<NodeTopology> get_device_topo(uint16_t peer_uid);
 
     /**
+     * Finds all known control surfaces
+     * @return The list of known control surfaces
+     */
+    std::vector<uint16_t> find_all_control_surfaces();
+
+    /**
      * Get the local UNIX time in µs
      * @return Local UNIX time in µs
      */
