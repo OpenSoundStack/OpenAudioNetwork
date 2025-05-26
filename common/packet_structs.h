@@ -146,6 +146,7 @@ struct ControlPipeCreate {
  */
 struct ControlData {
     uint8_t channel;          /**< Channel of the pipe */
+    uint8_t elem_index;       /**< Element index in pipe */
     uint16_t control_id;      /**< Control ID in the pipe */
     DataTypes control_type;   /**< Control data type */
     uint32_t data[4];         /**< Control data */

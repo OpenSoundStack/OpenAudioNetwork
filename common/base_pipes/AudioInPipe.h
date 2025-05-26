@@ -9,9 +9,12 @@ public:
 
     float process_sample(float sample) override;
     void set_gain_lin(float gain);
+    void set_trim_lin(float trim);
 
+    void apply_control(ControlPacket &pck) override;
 private:
     float m_in_gain;
+    float m_in_trim;
 };
 
 

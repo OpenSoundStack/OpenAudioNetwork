@@ -27,11 +27,23 @@ public:
      */
     void set_next_pipe(const std::shared_ptr<AudioPipe>& pipe);
 
+    /**
+     * If it exists, returns the next pipe elem in chain
+     * @return
+     */
+    std::optional<std::shared_ptr<AudioPipe>> next_pipe();
+
     bool is_pipe_enabled() const;
     void set_pipe_enabled(bool en);
 
     void set_channel(uint8_t channel);
     uint8_t get_channel();
+
+    /**
+     * Apply a control packet to the elem
+     * @param pck
+     */
+    virtual void apply_control(ControlPacket& pck);
 
 protected:
     /**

@@ -63,3 +63,10 @@ uint8_t AudioPipe::get_channel() {
     return m_channel_no;
 }
 
+std::optional<std::shared_ptr<AudioPipe> > AudioPipe::next_pipe() {
+    return m_next_pipe;
+}
+
+void AudioPipe::apply_control(ControlPacket &pck) {
+    // To be overriden...
+}
