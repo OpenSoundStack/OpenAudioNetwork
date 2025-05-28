@@ -3,6 +3,11 @@
 
 #include "common/AudioPipe.h"
 
+struct GainTrim {
+    float gain;
+    float trim;
+} __attribute__((packed));
+
 class AudioInPipe : public AudioPipe {
 public:
     AudioInPipe();

@@ -19,11 +19,11 @@ void AudioInPipe::set_trim_lin(float trim) {
 
 void AudioInPipe::apply_control(ControlPacket &pck) {
     if (pck.packet_data.control_id == 1) {
-        float new_trim;
-        float new_gain;
+        GainTrim gt{};
+        memcpy(&gt, &pck.packet_data.data, sizeof(GainTrim));
 
-        memcpy(&new_gain, &pck.packet_data.data[0], sizeof(float));
-        memcpy(&new_trim, &pck.packet_data.data[1], sizeof(float));
+        float new_trim = gt.trim;
+        float new_gain = gt.gain;
 
         set_gain_lin(new_gain);
         set_trim_lin(new_trim);
