@@ -4,10 +4,6 @@ add_library(oancommon
         audio_conf.h
         NetworkMapper.cpp
         NetworkMapper.h
-        AudioPipe.cpp
-        AudioPipe.h
-        base_pipes/AudioInPipe.cpp
-        base_pipes/AudioInPipe.h
         AudioRouter.cpp
         AudioRouter.h
 )

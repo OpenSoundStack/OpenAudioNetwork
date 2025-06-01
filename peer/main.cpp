@@ -9,8 +9,8 @@
 #include "peer_conf.h"
 #include "common/NetworkMapper.h"
 
-#include "common/AudioPipe.h"
-#include "common/base_pipes/AudioInPipe.h"
+#include "../../engine/piping/AudioPipe.h"
+#include "../../engine/piping/io/AudioInPipe.h"
 #include "common/base_pipes/AudioPortalPipe.h"
 #include "common/base_pipes/AudioPortalRxPipe.h"
 #include "../../engine/piping/feedback/LevelMeasurePipe.h"
