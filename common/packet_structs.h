@@ -64,7 +64,8 @@ enum class DataTypes : uint8_t {
     INT8,
     INT16,
     INT32,
-    FLOAT
+    FLOAT,
+    CUSTOM
 };
 
 /**
