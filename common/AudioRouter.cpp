@@ -33,8 +33,19 @@ bool AudioRouter::init_router(const std::string &eth_interface, const std::share
     return true;
 }
 
-
 void AudioRouter::poll_audio_data() {
+    // Check internal loopback buffer first
+    if (!m_local_audio_fifo.empty()) {
+        LowLatHeader llhdr{};
+        llhdr.sender_uid = m_self_uid;
+        llhdr.dest_uid = m_self_uid;
+
+        auto local_audio_data = m_local_audio_fifo.front();
+        m_local_audio_fifo.pop_front();
+
+        m_routing_callback(local_audio_data, llhdr);
+    }
+
     LowLatPacket<AudioPacket> rx_packet{};
     if (m_audio_iface->receive_data<LowLatPacket<AudioPacket>>(&rx_packet) <= 0) {
         return;
@@ -99,7 +110,11 @@ void AudioRouter::poll_control_packets(bool async) {
 }
 
 void AudioRouter::send_audio_packet(const AudioPacket &packet, uint16_t dest_uid) {
-    m_audio_iface->send_data(packet, dest_uid);
+    if (dest_uid != m_self_uid) {
+        m_audio_iface->send_data(packet, dest_uid);
+    } else {
+        m_local_audio_fifo.push_back(packet);
+    }
 }
 
 void AudioRouter::set_routing_callback(const std::function<void(AudioPacket&, LowLatHeader&)> &callback) {

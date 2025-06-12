@@ -190,6 +190,7 @@ struct ControlQuery {
  * @brief Packet containing audio samples
  */
 struct AudioData {
+    uint8_t source_channel;                         /**< If packet sent from another pipe, specify source */
     uint8_t channel;                                /**< Channel transported */
     float samples[AUDIO_DATA_SAMPLES_PER_PACKETS];  /**< Sample data */
 };

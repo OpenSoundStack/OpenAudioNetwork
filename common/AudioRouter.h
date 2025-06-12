@@ -17,6 +17,7 @@
 #include "packet_structs.h"
 
 #include <functional>
+#include <list>
 
 class AudioRouter {
 public:
@@ -44,6 +45,8 @@ private:
     std::unique_ptr<LowLatSocket> m_audio_iface;
     std::unique_ptr<LowLatSocket> m_control_iface;
     uint16_t m_self_uid;
+
+    std::list<AudioPacket> m_local_audio_fifo;
 
 protected:
     std::function<void(AudioPacket&, LowLatHeader&)> m_routing_callback;
