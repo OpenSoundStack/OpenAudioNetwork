@@ -17,7 +17,9 @@
 #include "packet_structs.h"
 
 #include <functional>
-#include <list>
+#include <queue>
+#include <mutex>
+#include <shared_mutex>
 
 class AudioRouter {
 public:
@@ -27,6 +29,7 @@ public:
     bool init_router(const std::string& eth_interface, const std::shared_ptr<NetworkMapper>& nmapper);
 
     void poll_audio_data();
+    void poll_local_audio_buffer();
     void poll_control_packets(bool async = true);
 
     void send_audio_packet(const AudioPacket &packet, uint16_t dest_uid);
@@ -46,8 +49,8 @@ private:
     std::unique_ptr<LowLatSocket> m_control_iface;
     uint16_t m_self_uid;
 
-    std::list<AudioPacket> m_local_audio_fifo;
-
+    std::queue<AudioPacket> m_local_audio_fifo;
+    std::shared_mutex m_local_fifo_mutex;
 protected:
     std::function<void(AudioPacket&, LowLatHeader&)> m_routing_callback;
     std::function<void(ControlPacket&, LowLatHeader&)> m_channel_control_callback;
