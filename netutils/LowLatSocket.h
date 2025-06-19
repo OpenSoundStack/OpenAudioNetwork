@@ -137,7 +137,7 @@ public:
         return sendto(
             m_socket,
             &llpck, sizeof(llpck),
-            0,
+            MSG_DONTWAIT,
             (sockaddr*)&m_iface_addr,
             sizeof(m_iface_addr)
         );
