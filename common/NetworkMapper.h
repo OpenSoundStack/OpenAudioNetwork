@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <optional>
 #include <mutex>
+#include <functional>
 
 #include "netutils/LowLatSocket.h"
 #include "packet_structs.h"
@@ -106,6 +107,20 @@ public:
     std::vector<uint16_t> find_all_control_surfaces();
 
     /**
+     * Install a callback called whenever a peer changes
+     *
+     * Callback signature void callback(PeerInfos& peer, bool peer_state)
+     *
+     * peer : The peer that has changed
+     *
+     * peer_state : true if still in network, false is it is gone from the network
+     *
+     * @warning The callback function MUST be thread-safe
+     * @param callback Function to be called
+     */
+    void set_peer_change_callback(std::function<void(PeerInfos&, bool)> callback);
+
+    /**
      * Get the local UNIX time in µs
      * @return Local UNIX time in µs
      */
@@ -130,6 +145,8 @@ private:
     std::unique_ptr<LowLatSocket> m_map_socket;
 
     std::unordered_map<int, PeerInfos> m_peers;
+
+    std::function<void(PeerInfos&, bool)> m_peer_change_callback;
 
     std::thread m_tx_thread;
     std::thread m_rx_thread;

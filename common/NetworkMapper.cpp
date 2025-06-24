@@ -13,6 +13,7 @@
 #include "NetworkMapper.h"
 
 NetworkMapper::NetworkMapper(const PeerConf& pconf) {
+    m_peer_change_callback = [](PeerInfos&, bool) {};
     update_packet(pconf);
 }
 
@@ -91,11 +92,16 @@ void NetworkMapper::mapper_process() {
 
         {
             std::lock_guard<std::mutex> m{m_mapper_mutex};
-            std::erase_if(m_peers, [now](const std::pair<int, PeerInfos> &pred) {
+            std::erase_if(m_peers, [now, this](const std::pair<int, PeerInfos> &pred) {
                 uint64_t delta = now - pred.second.alive_stamp;
                 if (delta > die_timeout) {
-                    std::cout << "Lost " << pred.second.peer_data.dev_name << " (ID = "
-                              << pred.second.peer_data.self_uid << ")" << std::endl;
+                    PeerInfos pinfo = pred.second;
+
+                    std::cout << "Lost " << pinfo.peer_data.dev_name << " (ID = "
+                                                  << pinfo.peer_data.self_uid << ")" << std::endl;
+
+                    m_peer_change_callback(pinfo, false);
+
                     return true;
                 }
 
@@ -116,10 +122,14 @@ void NetworkMapper::process_packet(MappingPacket pck) {
         std::cout << "               " << (int)pck.packet_data.topo.phy_in_count << " ins" << std::endl;
         std::cout << "               " << (int)pck.packet_data.topo.pipes_count << " pipes" << std::endl;
 
+        PeerInfos pinfo = {pck.packet_data, now};
+
         {
             std::lock_guard<std::mutex> m{m_mapper_mutex};
-            m_peers[pck.packet_data.self_uid] = {pck.packet_data, now};
+            m_peers[pck.packet_data.self_uid] = pinfo;
         }
+
+        m_peer_change_callback(pinfo, true);
     } else {
         {
             std::lock_guard<std::mutex> m{m_mapper_mutex};
@@ -208,3 +218,6 @@ std::vector<uint16_t> NetworkMapper::find_all_control_surfaces() {
     return surfaces;
 }
 
+void NetworkMapper::set_peer_change_callback(std::function<void(PeerInfos &, bool)> callback) {
+    m_peer_change_callback = std::move(callback);
+}
