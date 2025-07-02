@@ -121,10 +121,22 @@ public:
     void set_peer_change_callback(std::function<void(PeerInfos&, bool)> callback);
 
     /**
-     * Get the local UNIX time in µs
-     * @return Local UNIX time in µs
+     * Retreive all known clock slaves
+     * @return List of the clock slaves on the network
+     */
+    std::vector<PeerInfos> get_clock_slaves();
+
+    /**
+     * Get the local UNIX time in ms
+     * @return Local UNIX time in ms
      */
     static uint64_t local_now();
+
+    /**
+     * Get the local UNIX time in us
+     * @return Local UNIX time in us
+     */
+    static uint64_t local_now_us();
 private:
     void packet_sender();
     void packet_receiver();
@@ -145,6 +157,7 @@ private:
     std::unique_ptr<LowLatSocket> m_map_socket;
 
     std::unordered_map<int, PeerInfos> m_peers;
+    std::vector<PeerInfos> m_ck_slaves;
 
     std::function<void(PeerInfos&, bool)> m_peer_change_callback;
 

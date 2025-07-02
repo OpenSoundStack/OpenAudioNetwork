@@ -10,21 +10,16 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU Lesser General Public License for more details.
 
-#ifndef OPENAUDIONETWORK_PEER_CONF_H
-#define OPENAUDIONETWORK_PEER_CONF_H
+#ifndef CLOCK_H
+#define CLOCK_H
 
 #include <cstdint>
-#include <string>
-#include "common/packet_structs.h"
 
-struct PeerConf {
-    char dev_name[32];
-    std::string iface;
-    uint16_t uid;
-    DeviceType dev_type;
-    SamplingRate sample_rate;
-    NodeTopology topo;
-    ClockType ck_type;
+enum ClockSyncState : uint8_t {
+    CKSYNC_NO_SYNC,
+    CKSYNC_SYNC,
+    CKSYNC_DELAY_REQ,
+    CKSYNC_DELAY_RESP
 };
 
-#endif //OPENAUDIONETWORK_PEER_CONF_H
+#endif //CLOCK_H

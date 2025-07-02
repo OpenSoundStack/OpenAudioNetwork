@@ -38,6 +38,8 @@ void NetworkMapper::update_packet(const PeerConf &pconf) {
     m_packet.packet_data.type = pconf.dev_type;
     m_packet.packet_data.sample_rate = pconf.sample_rate;
 
+    m_packet.packet_data.ck_type = pconf.ck_type;
+
     m_packet.packet_data.self_address = 0;
     memcpy(&m_packet.packet_data.self_address, iface_meta.mac, 6);
 
@@ -100,6 +102,10 @@ void NetworkMapper::mapper_process() {
                     std::cout << "Lost " << pinfo.peer_data.dev_name << " (ID = "
                                                   << pinfo.peer_data.self_uid << ")" << std::endl;
 
+                    std::erase_if(m_ck_slaves, [this, pred](const PeerInfos& pi) {
+                        return pi.peer_data.self_uid == pred.second.peer_data.self_uid;
+                    });
+
                     m_peer_change_callback(pinfo, false);
 
                     return true;
@@ -127,6 +133,11 @@ void NetworkMapper::process_packet(MappingPacket pck) {
         {
             std::lock_guard<std::mutex> m{m_mapper_mutex};
             m_peers[pck.packet_data.self_uid] = pinfo;
+
+            if (pinfo.peer_data.ck_type == CKTYPE_SLAVE) {
+                std::cout << "New clock slave" << std::endl;
+                m_ck_slaves.emplace_back(pinfo);
+            }
         }
 
         m_peer_change_callback(pinfo, true);
@@ -198,6 +209,12 @@ uint64_t NetworkMapper::local_now() {
     ).count();
 }
 
+uint64_t NetworkMapper::local_now_us() {
+    return std::chrono::duration_cast<std::chrono::microseconds>(
+            std::chrono::high_resolution_clock::now().time_since_epoch()
+    ).count();
+}
+
 std::optional<NodeTopology> NetworkMapper::get_device_topo(uint16_t peer_uid) {
     if (m_peers.contains(peer_uid)) {
         return m_peers[peer_uid].peer_data.topo;
@@ -220,4 +237,8 @@ std::vector<uint16_t> NetworkMapper::find_all_control_surfaces() {
 
 void NetworkMapper::set_peer_change_callback(std::function<void(PeerInfos &, bool)> callback) {
     m_peer_change_callback = std::move(callback);
+}
+
+std::vector<PeerInfos> NetworkMapper::get_clock_slaves() {
+    return m_ck_slaves;
 }

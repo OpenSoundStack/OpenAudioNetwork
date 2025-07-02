@@ -6,6 +6,11 @@ add_library(oancommon
         NetworkMapper.h
         AudioRouter.cpp
         AudioRouter.h
+        ClockMaster.cpp
+        ClockMaster.h
+        clock.h
+        ClockSlave.cpp
+        ClockSlave.h
 )
 
 target_link_libraries(oancommon PUBLIC oannetutils)

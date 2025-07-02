@@ -10,21 +10,32 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU Lesser General Public License for more details.
 
-#ifndef OPENAUDIONETWORK_PEER_CONF_H
-#define OPENAUDIONETWORK_PEER_CONF_H
+#ifndef CLOCKSLAVE_H
+#define CLOCKSLAVE_H
 
-#include <cstdint>
-#include <string>
-#include "common/packet_structs.h"
+#include "NetworkMapper.h"
+#include "netutils/LowLatSocket.h"
+#include "clock.h"
 
-struct PeerConf {
-    char dev_name[32];
-    std::string iface;
-    uint16_t uid;
-    DeviceType dev_type;
-    SamplingRate sample_rate;
-    NodeTopology topo;
-    ClockType ck_type;
+class ClockSlave {
+public:
+    ClockSlave(uint16_t self_uid, const std::string& iface, std::shared_ptr<NetworkMapper> nmapper);
+    ~ClockSlave() = default;
+
+    void sync_process();
+    int64_t get_ck_offset();
+
+private:
+    void send_delay_req(uint16_t dest);
+    void calc_ck_offset();
+
+    std::shared_ptr<NetworkMapper> m_nmapper;
+    std::unique_ptr<LowLatSocket> m_sync_socket;
+
+    uint64_t m_tstamps[4];
+    int64_t m_ck_offset;
 };
 
-#endif //OPENAUDIONETWORK_PEER_CONF_H
+
+
+#endif //CLOCKSLAVE_H

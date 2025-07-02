@@ -32,7 +32,18 @@ enum class PacketType : uint32_t {
     CONTROL_CREATE,     /**< Pipe creation packets */
     CONTROL_RESPONSE,   /**< Response to a control command */
     CONTROL_QUERY,      /**< Device request */
-    AUDIO               /**< Audio data packets */
+    AUDIO,              /**< Audio data packets */
+    CLOCK_SYNC          /**< Time sync between devices */
+};
+
+/**
+ * @enum ClockType
+ * @brief Describes clock type of aa device
+ */
+enum ClockType : uint8_t {
+    CKTYPE_NONE = 0,    /** No clock sync on device */
+    CKTYPE_MASTER = 1,  /** Device is a clock master */
+    CKTYPE_SLAVE = 2    /** Device is a clock save */
 };
 
 /**
@@ -138,6 +149,7 @@ struct MappingData {
     DeviceType type;           /**< Device Type */
     SamplingRate sample_rate;  /**< Device sample rate (IO & DSP only) */
     NodeTopology topo;         /**< Device physical and compute topology */
+    ClockType ck_type;         /**< Device clock type */
 };
 
 /**
@@ -195,11 +207,20 @@ struct AudioData {
     float samples[AUDIO_DATA_SAMPLES_PER_PACKETS];  /**< Sample data */
 };
 
+/**
+ * @struct ClockSync
+ * @brief As the timestamp is already contained in the packet header we only have to notify the clock sync state (PTP states)
+ */
+struct ClockSync {
+    uint8_t packet_state;
+};
+
 typedef OANPacket<MappingData> MappingPacket;                   /**< Full OAN Packet for mapping data */
 typedef OANPacket<AudioData> AudioPacket;                       /**< Full OAN Packet for audio data */
 typedef OANPacket<ControlData> ControlPacket;                   /**< Full OAN Packet for control data */
 typedef OANPacket<ControlPipeCreate> ControlPipeCreatePacket;   /**< Full OAN Packet for pipe creation */
 typedef OANPacket<ControlResponse> ControlResponsePacket;       /**< Full OAN Packet for control response */
 typedef OANPacket<ControlQuery> ControlQueryPacket;             /**< Full OAN Packet for control query */
+typedef OANPacket<ClockSync> ClockSyncPacket;                   /**< Full OAN Packet for clock synchronization between devices */
 
 #endif //OPENAUDIONETWORK_PACKET_STRUCTS_H
