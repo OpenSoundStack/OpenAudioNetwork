@@ -1,4 +1,4 @@
-add_library(oancommon
+add_library(oancommon SHARED
         packet_structs.h
         packet_structs.cpp
         audio_conf.h
