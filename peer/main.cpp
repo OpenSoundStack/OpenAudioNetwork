@@ -21,12 +21,6 @@
 #include "peer_conf.h"
 #include "common/NetworkMapper.h"
 
-#include "../../plugins/loader/AudioPipe.h"
-#include "../../engine/piping/io/AudioInPipe.h"
-#include "common/base_pipes/AudioPortalPipe.h"
-#include "common/base_pipes/AudioPortalRxPipe.h"
-#include "../../engine/piping/feedback/LevelMeasurePipe.h"
-
 #include "netutils/LowLatSocket.h"
 
 std::optional<PeerConf> config_from_json(const std::string& path) {
