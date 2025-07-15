@@ -61,9 +61,9 @@ void AudioRouter::poll_local_audio_buffer() {
 }
 
 
-void AudioRouter::poll_audio_data() {
+void AudioRouter::poll_audio_data(bool async) {
     LowLatPacket<AudioPacket> rx_packet{};
-    if (m_audio_iface->receive_data<LowLatPacket<AudioPacket>>(&rx_packet) <= 0) {
+    if (m_audio_iface->receive_data<LowLatPacket<AudioPacket>>(&rx_packet, async) <= 0) {
         return;
     }
 

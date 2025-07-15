@@ -125,6 +125,7 @@ struct CommonHeader {
     uint16_t version;       /**< Protocol version */
     uint16_t flags;         /**< Header flags (currently unused) */
     uint64_t timestamp;     /**< Packet timestamp, used only for audio packets */
+    uint32_t prev_delay;    /**< Previous accumulated delay in us */
 } __attribute__((packed));
 
 /**

@@ -28,7 +28,7 @@ public:
 
     bool init_router(const std::string& eth_interface, const std::shared_ptr<NetworkMapper>& nmapper);
 
-    void poll_audio_data();
+    void poll_audio_data(bool async);
     void poll_local_audio_buffer();
     void poll_control_packets(bool async = true);
 
