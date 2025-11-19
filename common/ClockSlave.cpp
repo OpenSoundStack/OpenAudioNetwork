@@ -19,7 +19,9 @@ ClockSlave::ClockSlave(uint16_t self_uid, const std::string &iface, std::shared_
 
     m_sync_socket = std::make_unique<LowLatSocket>(self_uid, nmapper);
     if (!m_sync_socket->init_socket(iface, EthProtocol::ETH_PROTO_OANSYNC)) {
+#ifdef __linux__
         std::cerr << "Failed to init sync iface" << std::endl;
+#endif // __linux__
     }
 
     m_nmapper = nmapper;

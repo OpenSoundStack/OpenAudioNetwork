@@ -12,6 +12,13 @@
 
 #include "NetworkMapper.h"
 
+#ifndef __linux__
+extern void _delay(uint32_t ms);
+extern uint32_t _now_ms();
+extern uint64_t _now_us();
+extern "C" IfaceMeta _fetch_iface_meta(const std::string&);
+#endif // __linux__
+
 NetworkMapper::NetworkMapper(const PeerConf& pconf) {
     m_peer_change_callback = [](PeerInfos&, bool) {};
     update_packet(pconf);
@@ -29,7 +36,11 @@ bool NetworkMapper::init_mapper(const std::string& iface) {
 }
 
 void NetworkMapper::update_packet(const PeerConf &pconf) {
+#ifdef __linux__
     auto iface_meta = get_iface_meta(pconf.iface);
+#else
+    auto iface_meta = _fetch_iface_meta(pconf.iface);
+#endif // __linux__
 
     m_packet.header.type = PacketType::MAPPING;
     m_packet.packet_data.topo = pconf.topo;
@@ -47,6 +58,7 @@ void NetworkMapper::update_packet(const PeerConf &pconf) {
 }
 
 void NetworkMapper::launch_mapping_process() {
+#ifndef NO_THREADS
     // Mapper sending thread
     m_tx_thread = std::thread([this]() {
         packet_sender();
@@ -63,59 +75,77 @@ void NetworkMapper::launch_mapping_process() {
         mapper_process();
     });
     m_mapper_thread.detach();
+#endif // NO_THREADS
+}
+
+void NetworkMapper::mapper_update() {
+    uint64_t now = local_now();
+    constexpr int die_timeout = 15000;
+
+    std::erase_if(m_peers, [now, this](const std::pair<int, PeerInfos> &pred) {
+        uint64_t delta = now - pred.second.alive_stamp;
+        if (delta > die_timeout) {
+            PeerInfos pinfo = pred.second;
+
+#ifdef __linux__
+            std::cout << "Lost " << pinfo.peer_data.dev_name << " (ID = " << pinfo.peer_data.self_uid << ")" << std::endl;
+#endif // __linux__
+
+            std::erase_if(m_ck_slaves, [this, pred](const PeerInfos& pi) {
+                return pi.peer_data.self_uid == pred.second.peer_data.self_uid;
+            });
+
+            m_peer_change_callback(pinfo, false);
+
+            return true;
+        }
+
+        return false;
+    });
+}
+
+void NetworkMapper::packet_recv_update() {
+    static LowLatPacket<MappingPacket> pck{};
+    m_map_socket->receive_data(&pck, false);
+
+    if(pck.payload.header.type == PacketType::MAPPING) {
+        process_packet(pck.payload);
+    }
+}
+
+void NetworkMapper::packet_send_update() {
+    m_map_socket->send_data<MappingPacket>(m_packet, 0);
 }
 
 void NetworkMapper::packet_sender() {
     while(true) {
-        m_map_socket->send_data<MappingPacket>(m_packet, 0);
-
+        packet_send_update();
+#ifdef __linux__
         usleep(5000000);
+#else
+
+#endif // __linux__
     }
 }
 
 void NetworkMapper::packet_receiver() {
-    LowLatPacket<MappingPacket> pck{};
-    sockaddr_in sender = {};
-
     while(true) {
-        m_map_socket->receive_data(&pck, false);
-
-        if(pck.payload.header.type == PacketType::MAPPING) {
-            process_packet(pck.payload);
-        }
+        packet_recv_update();
     }
 }
 
 void NetworkMapper::mapper_process() {
-    constexpr int die_timeout = 15000;
-
     while(true) {
-        uint64_t now = local_now();
-
         {
+#ifndef NO_THREADS
             std::lock_guard<std::mutex> m{m_mapper_mutex};
-            std::erase_if(m_peers, [now, this](const std::pair<int, PeerInfos> &pred) {
-                uint64_t delta = now - pred.second.alive_stamp;
-                if (delta > die_timeout) {
-                    PeerInfos pinfo = pred.second;
-
-                    std::cout << "Lost " << pinfo.peer_data.dev_name << " (ID = "
-                                                  << pinfo.peer_data.self_uid << ")" << std::endl;
-
-                    std::erase_if(m_ck_slaves, [this, pred](const PeerInfos& pi) {
-                        return pi.peer_data.self_uid == pred.second.peer_data.self_uid;
-                    });
-
-                    m_peer_change_callback(pinfo, false);
-
-                    return true;
-                }
-
-                return false;
-            });
+#endif // NO_THREADS
+            mapper_update();
         }
 
+#ifdef __linux__
         usleep(1000000);
+#endif // __linux__
     }
 }
 
@@ -123,19 +153,25 @@ void NetworkMapper::process_packet(MappingPacket pck) {
     uint64_t now = local_now();
 
     if(!m_peers.contains(pck.packet_data.self_uid)) {
+#ifdef __linux__
         std::cout << "Discovered " << pck.packet_data.dev_name << " (ID = " << pck.packet_data.self_uid << ")" << std::endl;
         std::cout << "Audio config : " << (int)pck.packet_data.topo.phy_out_count << " outs" << std::endl;
         std::cout << "               " << (int)pck.packet_data.topo.phy_in_count << " ins" << std::endl;
         std::cout << "               " << (int)pck.packet_data.topo.pipes_count << " pipes" << std::endl;
+#endif // __linux__
 
         PeerInfos pinfo = {pck.packet_data, now};
 
         {
+#ifndef NO_THREADS
             std::lock_guard<std::mutex> m{m_mapper_mutex};
+#endif // NO_THREADS
             m_peers[pck.packet_data.self_uid] = pinfo;
 
             if (pinfo.peer_data.ck_type == CKTYPE_SLAVE) {
+#ifdef __linux__
                 std::cout << "New clock slave" << std::endl;
+#endif // __linux__
                 m_ck_slaves.emplace_back(pinfo);
             }
         }
@@ -143,7 +179,9 @@ void NetworkMapper::process_packet(MappingPacket pck) {
         m_peer_change_callback(pinfo, true);
     } else {
         {
+#ifndef NO_THREADS
             std::lock_guard<std::mutex> m{m_mapper_mutex};
+#endif // NO_THREADS
             m_peers[pck.packet_data.self_uid] = {pck.packet_data, now};
         }
     }
@@ -159,7 +197,9 @@ std::optional<uint64_t> NetworkMapper::get_mac_by_uid(uint16_t uid) {
 
 void NetworkMapper::update_peer_resource_mapping(NodeTopology topo, uint16_t peer_uid) {
     if (m_peers.contains(peer_uid)) {
+#ifndef NO_THREADS
         std::lock_guard<std::mutex> m{m_mapper_mutex};
+#endif // NO_THREADS
         auto peer_infos = m_peers[peer_uid];
         peer_infos.peer_data.topo = topo;
     } else {
@@ -168,7 +208,9 @@ void NetworkMapper::update_peer_resource_mapping(NodeTopology topo, uint16_t pee
 }
 
 void NetworkMapper::update_resource_mapping(NodeTopology topo) {
+#ifndef NO_THREADS
     std::lock_guard<std::mutex> m{m_mapper_mutex};
+#endif // NO_THREADS
     m_packet.packet_data.topo = topo;
 }
 
@@ -204,15 +246,23 @@ std::optional<uint8_t> NetworkMapper::first_free_processing_channel(uint16_t uid
 }
 
 uint64_t NetworkMapper::local_now() {
+#ifdef __linux__
     return std::chrono::duration_cast<std::chrono::milliseconds>(
             std::chrono::high_resolution_clock::now().time_since_epoch()
     ).count();
+#else
+    return _now_ms();
+#endif
 }
 
 uint64_t NetworkMapper::local_now_us() {
+#ifdef __linux__
     return std::chrono::duration_cast<std::chrono::microseconds>(
             std::chrono::high_resolution_clock::now().time_since_epoch()
     ).count();
+#else
+    return _now_us();
+#endif
 }
 
 std::optional<NodeTopology> NetworkMapper::get_device_topo(uint16_t peer_uid) {

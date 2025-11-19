@@ -1,4 +1,4 @@
-add_library(oannetutils SHARED
+add_library(oannetutils
         udp.cpp
         udp.h
         LowLatSocket.cpp

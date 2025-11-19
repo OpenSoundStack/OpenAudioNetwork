@@ -17,6 +17,7 @@
 #include <cstdint>
 #include <memory>
 
+#ifdef __linux__
 #include <unistd.h>
 #include <netinet/udp.h>
 #include <linux/net_tstamp.h>
@@ -58,5 +59,5 @@ private:
     int m_socket;
     sockaddr_in m_self;
 };
-
+#endif // __linux__
 #endif //OSST_NET_UDP_H

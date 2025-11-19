@@ -50,7 +50,10 @@ private:
     uint16_t m_self_uid;
 
     std::queue<AudioPacket> m_local_audio_fifo;
+
+#ifndef NO_THREADS
     std::shared_mutex m_local_fifo_mutex;
+#endif // NO_THREADS
 protected:
     std::function<void(AudioPacket&, LowLatHeader&)> m_routing_callback;
     std::function<void(ControlPacket&, LowLatHeader&)> m_channel_control_callback;

@@ -13,19 +13,37 @@
 #ifndef LOWLATSOCKET_H
 #define LOWLATSOCKET_H
 
-#include <string>
+#ifdef __linux__
 #include <iostream>
+#endif //__linux__
+
+#include <string>
 #include <cstring>
 #include <cassert>
-#include <memory>
 #include <optional>
+#include <cstdint>
+#include <memory>
 
+#ifdef __linux__
 #include <linux/if_packet.h>
 #include <linux/if_ether.h>
 #include <netinet/in.h>
 #include <net/if.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
+#else
+
+// Defining linux-like structs for compat
+struct EthernetHeader {
+    uint8_t h_dest[6];
+    uint8_t h_source[6];
+    uint16_t h_proto;
+} __attribute__((packed));
+typedef EthernetHeader ethhdr;
+
+#define htons(x) ((((x) & 0xFF00) >> 8) | (((x) & 0x00FF) << 8))
+
+#endif //__linux__
 
 /**
  * @enum EthProtocol
@@ -135,6 +153,7 @@ public:
             }
         }
 
+#ifdef __linux__
         return sendto(
             m_socket,
             &llpck, sizeof(llpck),
@@ -142,6 +161,9 @@ public:
             (sockaddr*)&m_iface_addr,
             sizeof(m_iface_addr)
         );
+#else
+        return send_data_internal((uint8_t*)&llpck, sizeof(T));
+#endif // __linux__
     }
 
     /**
@@ -153,7 +175,11 @@ public:
      */
     template<class T>
     int receive_data(T* data, bool async = true) {
+#ifdef __linux__
         return recv(m_socket, data, sizeof(T), async ? MSG_DONTWAIT : 0);
+#else
+        return recv_data_internal((uint8_t*)data, sizeof(T));
+#endif // __linux__
     }
 
     /**
@@ -164,7 +190,11 @@ public:
      * @return Received byte count
      */
     int receive_data_raw(char* data, size_t size, bool async = true) const {
+#ifdef __linux__
         return recv(m_socket, data, size, async ? MSG_DONTWAIT : 0);
+#else
+        return recv_data_internal((uint8_t*)data, size);
+#endif // __linux__
     }
 
 private:
@@ -175,7 +205,16 @@ private:
      */
     std::optional<uint64_t> get_mac(uint16_t id);
 
+#ifndef __linux__
+    int send_data_internal(uint8_t* data, size_t size);
+    int recv_data_internal(uint8_t* data, size_t size) const;
+#endif // __linux__
+
+#ifdef __linux__
     sockaddr_ll m_iface_addr{};
+#else
+    uint8_t m_iface_addr[6];
+#endif // __linux__
     ethhdr m_hdr{};
 
     int m_socket;

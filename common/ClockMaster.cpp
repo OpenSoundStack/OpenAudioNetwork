@@ -21,7 +21,9 @@ ClockMaster::ClockMaster(uint16_t self_uid, const std::string& iface, std::share
 
     m_sync_socket = std::make_shared<LowLatSocket>(self_uid, nmapper);
     if (!m_sync_socket->init_socket(iface, EthProtocol::ETH_PROTO_OANSYNC)) {
+#ifdef __linux__
         std::cerr << "Failed to init clock sync socket !" << std::endl;
+#endif  // __linux__
     }
 
     m_sync_states = {};

@@ -12,6 +12,8 @@
 
 #include "udp.h"
 
+#ifdef __linux__
+
 UDPSocket::UDPSocket() {
 }
 
@@ -62,3 +64,4 @@ void UDPSocket::set_high_prio() const {
     setsockopt(m_socket, SOL_SOCKET, SO_TIMESTAMPING, &enable, sizeof(enable));
 }
 
+#endif // __linux__

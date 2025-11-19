@@ -41,7 +41,9 @@ void AudioRouter::poll_local_audio_buffer() {
 
     while (!local_fifo_empty) {
         {
+#ifndef NO_THREADS
             std::unique_lock<std::shared_mutex> __lock{m_local_fifo_mutex};
+#endif // NO_THREADS
             local_fifo_empty = m_local_audio_fifo.empty();
 
             if (!local_fifo_empty) {
@@ -129,7 +131,9 @@ void AudioRouter::send_audio_packet(const AudioPacket &packet, uint16_t dest_uid
     if (dest_uid != m_self_uid) {
         m_audio_iface->send_data(packet, dest_uid);
     } else {
+#ifndef NO_THREADS
         std::unique_lock<std::shared_mutex> __lock{m_local_fifo_mutex};
+#endif // NO_THREADS
         m_local_audio_fifo.push(packet);
     }
 }

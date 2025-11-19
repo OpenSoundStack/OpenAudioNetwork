@@ -13,10 +13,20 @@
 #include "LowLatSocket.h"
 #include "common/NetworkMapper.h"
 
+#ifndef __linux__
+extern "C" int _send_data(uint8_t* data, size_t data_len);
+extern "C" int _recv_data(uint8_t* data_out, size_t data_size);
+#endif // __linux__
+
+std::optional<uint64_t> LowLatSocket::get_mac(uint16_t id) {
+    return m_mapper->get_mac_by_uid(id);
+}
+
+#ifdef __linux__
+
 LowLatSocket::LowLatSocket(uint16_t self_uid, std::shared_ptr<NetworkMapper> mapper) {
     m_socket = 0;
     m_iface_addr = {};
-
     m_self_uid = self_uid;
     m_mapper = std::move(mapper);
 }
@@ -44,10 +54,6 @@ bool LowLatSocket::init_socket(std::string interface, EthProtocol proto) {
     m_hdr.h_proto = htons(proto);
 
     return true;
-}
-
-std::optional<uint64_t> LowLatSocket::get_mac(uint16_t id) {
-    return m_mapper->get_mac_by_uid(id);
 }
 
 
@@ -81,3 +87,41 @@ IfaceMeta get_iface_meta(const std::string &name) {
     return meta;
 }
 
+#else
+// Embeddable interface that must be private
+extern "C" IfaceMeta _fetch_iface_meta(std::string& name);
+
+IfaceMeta get_iface_meta(std::string& name) {
+    return _fetch_iface_meta(name);
+}
+
+LowLatSocket::LowLatSocket(uint16_t self_uid, std::shared_ptr<NetworkMapper> mapper) {
+    m_socket = 0;
+    m_self_uid = self_uid;
+    m_mapper = std::move(mapper);
+}
+
+LowLatSocket::~LowLatSocket() {
+
+}
+
+bool LowLatSocket::init_socket(std::string interface, EthProtocol proto) {
+    IfaceMeta meta = get_iface_meta(interface);
+    memcpy(m_iface_addr, meta.mac, 6);
+
+    memset(m_hdr.h_dest, 0xFF, 6);
+    memcpy(m_hdr.h_source, meta.mac, 6);
+    m_hdr.h_proto = htons(proto);
+
+    return true;
+}
+
+int LowLatSocket::send_data_internal(uint8_t *data, size_t size) {
+    return _send_data(data, size);
+}
+
+int LowLatSocket::recv_data_internal(uint8_t *data, size_t size) const {
+    return _recv_data(data, size);
+}
+
+#endif // __linux__

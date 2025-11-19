@@ -13,13 +13,16 @@
 #ifndef OPENAUDIONETWORK_NETWORKMAPPER_H
 #define OPENAUDIONETWORK_NETWORKMAPPER_H
 
+#ifndef NO_THREADS
+#include <thread>
+#include <mutex>
+#endif // NO_THREADS
+
 #include <memory>
 #include <cstring>
-#include <thread>
 #include <unordered_map>
 #include <algorithm>
 #include <optional>
-#include <mutex>
 #include <functional>
 
 #include "netutils/LowLatSocket.h"
@@ -137,10 +140,17 @@ public:
      * @return Local UNIX time in us
      */
     static uint64_t local_now_us();
+
+    void mapper_update();
+    void packet_send_update();
+    void packet_recv_update();
 private:
+    /**
+     * Main mapper process
+     */
+    void mapper_process();
     void packet_sender();
     void packet_receiver();
-    void mapper_process();
 
     /**
      * Updated the default configuration
@@ -161,10 +171,12 @@ private:
 
     std::function<void(PeerInfos&, bool)> m_peer_change_callback;
 
+#ifndef NO_THREADS
     std::thread m_tx_thread;
     std::thread m_rx_thread;
     std::thread m_mapper_thread;
     std::mutex m_mapper_mutex;
+#endif // NO_THREADS
 };
 
 

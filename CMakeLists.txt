@@ -5,4 +5,7 @@ set(CMAKE_CXX_STANDARD 20)
 
 add_subdirectory(common)
 add_subdirectory(netutils)
-add_subdirectory(peer)
+
+if(COMPILE_PEER)
+    add_subdirectory(peer)
+endif (COMPILE_PEER)
