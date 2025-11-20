@@ -15,7 +15,7 @@
 
 #ifndef __linux__
 extern "C" int _send_data(uint8_t* data, size_t data_len);
-extern "C" int _recv_data(uint8_t* data_out, size_t data_size);
+extern "C" int _recv_data(uint8_t* data_out, size_t data_size, EthProtocol filt_proto);
 #endif // __linux__
 
 std::optional<uint64_t> LowLatSocket::get_mac(uint16_t id) {
@@ -52,6 +52,7 @@ bool LowLatSocket::init_socket(std::string interface, EthProtocol proto) {
     memset(m_hdr.h_dest, 0xFF, 6);
     memcpy(m_hdr.h_source, meta.mac, 6);
     m_hdr.h_proto = htons(proto);
+    m_self_proto = proto;
 
     return true;
 }
@@ -112,6 +113,7 @@ bool LowLatSocket::init_socket(std::string interface, EthProtocol proto) {
     memset(m_hdr.h_dest, 0xFF, 6);
     memcpy(m_hdr.h_source, meta.mac, 6);
     m_hdr.h_proto = htons(proto);
+    m_self_proto = proto;
 
     return true;
 }
@@ -121,7 +123,7 @@ int LowLatSocket::send_data_internal(uint8_t *data, size_t size) {
 }
 
 int LowLatSocket::recv_data_internal(uint8_t *data, size_t size) const {
-    return _recv_data(data, size);
+    return _recv_data(data, size, m_self_proto);
 }
 
 #endif // __linux__

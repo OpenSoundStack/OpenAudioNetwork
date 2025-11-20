@@ -219,6 +219,7 @@ private:
 
     int m_socket;
     uint16_t m_self_uid;
+    EthProtocol m_self_proto;
 
     std::shared_ptr<NetworkMapper> m_mapper;
 };
