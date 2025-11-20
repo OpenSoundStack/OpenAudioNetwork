@@ -3,6 +3,10 @@ project(OpenAudioNetwork)
 
 set(CMAKE_CXX_STANDARD 20)
 
+if(NO_THREADS)
+    add_compile_definitions(NO_THREADS)
+endif (NO_THREADS)
+
 add_subdirectory(common)
 add_subdirectory(netutils)
 
