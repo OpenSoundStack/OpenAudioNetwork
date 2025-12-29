@@ -162,7 +162,7 @@ public:
             sizeof(m_iface_addr)
         );
 #else
-        return send_data_internal((uint8_t*)&llpck, sizeof(T));
+        return send_data_internal((uint8_t*)&llpck, sizeof(INT_LLP<sizeof(T)>));
 #endif // __linux__
     }
 
