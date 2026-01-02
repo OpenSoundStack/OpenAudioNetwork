@@ -106,9 +106,9 @@ void NetworkMapper::mapper_update() {
 
 void NetworkMapper::packet_recv_update() {
     static LowLatPacket<MappingPacket> pck{};
-    m_map_socket->receive_data(&pck, false);
+    int rx_data = m_map_socket->receive_data(&pck, false);
 
-    if(pck.payload.header.type == PacketType::MAPPING) {
+    if(rx_data > 0 && pck.payload.header.type == PacketType::MAPPING) {
         process_packet(pck.payload);
     }
 }
