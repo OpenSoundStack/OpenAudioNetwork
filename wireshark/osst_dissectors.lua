@@ -1,6 +1,7 @@
 osst_llhdr = Proto("osstllp", "OSST Low Latency Packet")
 osst_hdr = Proto("osstcomhdr", "OSST Header")
-oan_mapping = Proto("osstmapping", "OSST Mapping")
+oan_mapping = Proto("osstmapping", "OAN Mapping")
+oan_ctrl_pipenew = Proto("osstctrlpnew", "OAN Create Pipe")
 
 hdr_ptype = ProtoField.uint8("osstcomhdr.ptype", "packetType", base.HEX)
 hdr_version = ProtoField.uint16("osstcomhdr.ver", "version", base.HEX)
@@ -19,6 +20,12 @@ oan_map_device_type = ProtoField.uint16("oan.map.dtype", "deviceType", base.HEX)
 oan_map_sampling_rate = ProtoField.uint32("oan.map.srate", "sampleRate", base.HEX)
 oan_map_node_topo = ProtoField.none("oan.map.node_topo", "nodeTopo")
 oan_map_cktype = ProtoField.uint32("oan.map.cktype", "clockType", base.HEX)
+
+oan_pnew_channel = ProtoField.uint8("oan.ctrl.pipenew.channel", "channel", base.DEC)
+oan_pnew_stack_pos = ProtoField.uint8("oan.ctrl.pipenew.stack_pos", "stackPos", base.DEC)
+oan_pnew_seq = ProtoField.uint8("oan.ctrl.pipenew.seq", "seq", base.DEC)
+oan_pnew_seq_max = ProtoField.uint8("oan.ctrl.pipenew.seq_max", "seqMax", base.DEC)
+oan_pnew_elem_type = ProtoField.string("oan.ctrl.pipenew.elem_type", "elemType")
 
 osst_llhdr.fields = {
     llhdr_sender_uid,
@@ -44,22 +51,53 @@ oan_mapping.fields = {
     oan_map_cktype
 }
 
+oan_ctrl_pipenew.fields = {
+    oan_pnew_channel,
+    oan_pnew_stack_pos,
+    oan_pnew_seq,
+    oan_pnew_seq_max,
+    oan_pnew_elem_type
+}
+
+function oan_ctrl_pipenew.dissector(buffer, pinfo, tree)
+    local length = buffer:len()
+    if length == 0 then
+        return
+    end
+
+    local seq = buffer(2, 1):le_uint() + 1
+    local seq_max = buffer(3, 1):le_uint()
+
+    pinfo.cols.info = "OAN Control Pipe Create Packet, Seq = " .. seq .. "/" .. seq_max
+
+    local subtree = tree:add(oan_ctrl_pipenew, buffer(), "OAN Control Pipe Create")
+
+    subtree:add_le(oan_pnew_channel,    buffer(0, 1))
+    subtree:add_le(oan_pnew_stack_pos,  buffer(1, 1))
+    subtree:add_le(oan_pnew_seq,        buffer(2, 1))
+    subtree:add_le(oan_pnew_seq_max,    buffer(3, 1))
+    subtree:add_le(oan_pnew_elem_type,  buffer(4, 32))
+end
+
 function oan_mapping.dissector(buffer, pinfo, tree)
     local length = buffer:len()
     if length == 0 then
         return
     end
 
-    pinfo.cols.protocol = "OAN Mapping Packet"
+    pinfo.cols.info = "OAN Mapping Packet"
+
+    local dtype = get_oan_device_type_name(buffer(42, 2):le_uint())
+    local ck_type = get_oan_clock_type_name(buffer(48+20, 4):le_uint())
 
     local subtree = tree:add(oan_mapping, buffer(), "OAN Mapping Packet")
     subtree:add_le(oan_map_devname, buffer(0, 32))
     subtree:add_le(oan_map_self_addr, buffer(32, 6))
     subtree:add_le(oan_map_self_uid, buffer(40, 2)) -- Addr encoded as uint64_t, hence the 2 bytes offset
-    subtree:add_le(oan_map_device_type, buffer(42, 2))
+    subtree:add_le(oan_map_device_type, buffer(42, 2)):append_text(" (" .. dtype .. ") ")
     subtree:add_le(oan_map_sampling_rate, buffer(44, 4))
     subtree:add_le(oan_map_node_topo, buffer(48, 20))
-    subtree:add_le(oan_map_cktype, buffer(48+20, 4))
+    subtree:add_le(oan_map_cktype, buffer(48+20, 4)):append_text(" (" .. ck_type .. ") ")
 end
 function osst_hdr.dissector(buffer, pinfo, tree)
     local length = buffer:len()
@@ -67,7 +105,8 @@ function osst_hdr.dissector(buffer, pinfo, tree)
         return
     end
 
-    pinfo.cols.protocol = "OAN Common Header"
+    pinfo.cols.protocol = "OAN Audio"
+    pinfo.cols.info = "OAN Unknown Packet"
 
     local ptype_number = buffer(0, 4):le_uint()
     local ptype_name = get_oan_packet_type(ptype_number)
@@ -83,6 +122,10 @@ function osst_hdr.dissector(buffer, pinfo, tree)
     local new_buffer = buffer(com_hdr_len):tvb()
     if ptype_number == 0x00 then
         oan_mapping.dissector(new_buffer, pinfo, subtree)
+    elseif ptype_number == 0x02 then
+        oan_ctrl_pipenew.dissector(new_buffer, pinfo, subtree)
+    else
+        Dissector.get("data"):call(new_buffer, pinfo, subtree)
     end
 end
 
