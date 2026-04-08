@@ -24,7 +24,7 @@ function oan_mapping.dissector(buffer, pinfo, tree)
 		return
 	end
 
-	pinfo.cols.info = "OAN Mapping Packet"
+	pinfo.cols.info:append("OAN Mapping Packet")
 
 	local dtype = get_oan_device_type_name(buffer(42, 2):le_uint())
 	local ck_type = get_oan_clock_type_name(buffer(48+20, 4):le_uint())

@@ -23,7 +23,7 @@ function oan_ctrl_pipenew.dissector(buffer, pinfo, tree)
 	local seq = buffer(2, 1):le_uint() + 1
 	local seq_max = buffer(3, 1):le_uint()
 
-	pinfo.cols.info = "OAN Control Pipe Create Packet, Seq = " .. seq .. "/" .. seq_max
+	pinfo.cols.info:append("OAN Control Pipe Create Packet, Seq = " .. seq .. "/" .. seq_max)
 
 	local subtree = tree:add(oan_ctrl_pipenew, buffer(), "OAN Control Pipe Create")
 

@@ -29,7 +29,7 @@ function oan_ctrl_resp.dissector(buffer, pinfo, tree)
 	local resp_name = resp_codes_valstr[resp_val] or "Unknown"
 
 	pinfo.cols.protocol = "OAN Control Response"
-	pinfo.cols.info = string.format("OAN Control Response: %s (Channel: %d)", resp_name, channel)
+	pinfo.cols.info:append(string.format("OAN Control Response: %s (Channel: %d)", resp_name, channel))
 
 	local subtree = tree:add(oan_ctrl_resp, buffer(), "OAN Control Response")
 

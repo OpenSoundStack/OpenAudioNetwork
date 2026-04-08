@@ -21,7 +21,6 @@ function osst_hdr.dissector(buffer, pinfo, tree)
 	end
 
 	pinfo.cols.protocol = "OAN Audio"
-	pinfo.cols.info = "OAN Unknown Packet"
 
 	local ptype_number = buffer(0, 4):le_uint()
 	local ptype_name = get_oan_packet_type(ptype_number)

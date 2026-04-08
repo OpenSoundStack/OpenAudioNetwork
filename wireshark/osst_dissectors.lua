@@ -24,7 +24,7 @@ function osst_llhdr.dissector(buffer, pinfo, tree)
     end
 
     pinfo.cols.protocol = "OSST Low Lat Packet"
-    pinfo.cols.info = llhdr_sender .. " -> " .. llhdr_recv
+    pinfo.cols.info = llhdr_sender .. " -> " .. llhdr_recv .. ", "
 
     local subtree = tree:add(osst_llhdr, buffer(), "OSST Low Lat Packet")
     subtree:add_le(llhdr_sender_uid, buffer(0, 2))
