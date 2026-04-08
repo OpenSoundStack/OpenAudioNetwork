@@ -20,8 +20,8 @@
  * @brief Describes packet type in an OANPacket header
  */
 enum class PacketType : uint32_t {
-    MAPPING,            /**< Mapping packet @see MappingData */
-    CONTROL,            /**< Show control packets */
+    MAPPING = 0x00,     /**< Mapping packet @see MappingData */
+    CONTROL = 0x01,     /**< Show control packets */
     CONTROL_CREATE,     /**< Pipe creation packets */
     CONTROL_RESPONSE,   /**< Response to a control command */
     CONTROL_QUERY,      /**< Device request */
@@ -33,7 +33,7 @@ enum class PacketType : uint32_t {
  * @enum ClockType
  * @brief Describes clock type of aa device
  */
-enum ClockType : uint8_t {
+enum ClockType : uint32_t {
     CKTYPE_NONE = 0,    /** No clock sync on device */
     CKTYPE_MASTER = 1,  /** Device is a clock master */
     CKTYPE_SLAVE = 2    /** Device is a clock save */
@@ -43,7 +43,7 @@ enum ClockType : uint8_t {
  * @enum DeviceType
  * @brief Describes the current device type in mapping packets
  */
-enum class DeviceType : uint32_t {
+enum class DeviceType : uint16_t {
     CONTROL_SURFACE,    /**< Control surface device with only control and GUI */
     MONITORING,         /**< Monitoring interface that receives only audio and do not send/receive control packets */
     AUDIO_IO_INTERFACE, /**< Physical IO interface */
@@ -107,7 +107,8 @@ struct NodeTopology {
 
     uint64_t phy_out_resmap;
     uint64_t pipe_resmap;
-};
+    uint8_t __padding__;
+} __attribute__((packed));
 
 /**
  * @struct CommonHeader
@@ -118,7 +119,7 @@ struct CommonHeader {
     uint16_t version;       /**< Protocol version */
     uint16_t flags;         /**< Header flags (currently unused) */
     uint64_t timestamp;     /**< Packet timestamp, used only for audio packets */
-    uint32_t prev_delay;    /**< Previous accumulated delay in us */
+    uint64_t prev_delay;    /**< Previous accumulated delay in us */
 } __attribute__((packed));
 
 /**
