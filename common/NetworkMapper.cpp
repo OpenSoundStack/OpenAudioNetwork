@@ -172,6 +172,7 @@ void NetworkMapper::process_packet(MappingPacket pck) {
         }
 
         m_peer_change_callback(pinfo, true);
+        m_temp_peers.erase(pck.packet_data.self_uid); // In case there was a temp peer associated with that ID, remove it
     } else {
         {
 #ifndef NO_THREADS
@@ -185,6 +186,8 @@ void NetworkMapper::process_packet(MappingPacket pck) {
 std::optional<uint64_t> NetworkMapper::get_mac_by_uid(uint16_t uid) {
     if (m_peers.contains(uid)) {
         return m_peers[uid].peer_data.self_address;
+    } else if (m_temp_peers.contains(uid)) {
+        return m_temp_peers[uid].peer_data.self_address;
     } else {
         return {};
     }
@@ -286,4 +289,8 @@ void NetworkMapper::set_peer_change_callback(std::function<void(PeerInfos &, boo
 
 std::vector<PeerInfos> NetworkMapper::get_clock_slaves() {
     return m_ck_slaves;
+}
+
+void NetworkMapper::add_temp_peer(uint16_t uid, const PeerInfos &infos) {
+    m_temp_peers[uid] = std::move(infos);
 }

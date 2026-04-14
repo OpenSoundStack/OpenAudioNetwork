@@ -7,6 +7,8 @@
 
 #include <algorithm>
 
+#include "NetworkMapper.h"
+
 AudioRouter::AudioRouter(uint16_t self_uid) {
     m_self_uid = self_uid;
     m_routing_callback = [](AudioPacket&, LowLatHeader&) {};
@@ -15,6 +17,8 @@ AudioRouter::AudioRouter(uint16_t self_uid) {
 }
 
 bool AudioRouter::init_router(const std::string &eth_interface, const std::shared_ptr<NetworkMapper>& nmapper) {
+    m_nmapper = nmapper;
+
     m_audio_iface = std::make_unique<LowLatSocket>(m_self_uid, nmapper);
     if (!m_audio_iface->init_socket(eth_interface, ETH_PROTO_OANAUDIO)) {
         return false;
@@ -82,6 +86,16 @@ void AudioRouter::poll_control_packets(bool async) {
 
         if (header.llhdr.dest_uid != m_self_uid) {
             return;
+        }
+
+        // If we don't know the sender yet, keep it in memory to avoid
+        // responses to incoming packet to be dropped
+        if (!m_nmapper->get_mac_by_uid(header.llhdr.sender_uid).has_value()) {
+            PeerInfos pinfos{};
+            pinfos.peer_data.self_uid = header.llhdr.sender_uid;
+            memcpy(&pinfos.peer_data.self_address, header.eth_header.h_source, 6);
+
+            m_nmapper->add_temp_peer(header.llhdr.sender_uid, pinfos);
         }
 
         // Packet switching

@@ -117,6 +117,14 @@ public:
     void set_peer_change_callback(std::function<void(PeerInfos&, bool)> callback);
 
     /**
+     * Adds a temporary peer that we don't know much about. Essentially here to avoid packets
+     * to be dropped when a device is still not discovered but has already started to communicate with us
+     * @param infos PeerInfos with at least its MAC address
+     * @param uid Peer uid address
+     */
+    void add_temp_peer(uint16_t uid, const PeerInfos& infos);
+
+    /**
      * Retreive all known clock slaves
      * @return List of the clock slaves on the network
      */
@@ -160,6 +168,7 @@ private:
     std::unique_ptr<LowLatSocket> m_map_socket;
 
     std::unordered_map<int, PeerInfos> m_peers;
+    std::unordered_map<int, PeerInfos> m_temp_peers;
     std::vector<PeerInfos> m_ck_slaves;
 
     std::function<void(PeerInfos&, bool)> m_peer_change_callback;

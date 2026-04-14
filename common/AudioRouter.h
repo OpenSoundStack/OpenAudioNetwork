@@ -44,6 +44,8 @@ private:
 
     std::queue<AudioPacket> m_local_audio_fifo;
 
+    std::shared_ptr<NetworkMapper> m_nmapper;
+
 #ifndef NO_THREADS
     std::shared_mutex m_local_fifo_mutex;
 #endif // NO_THREADS
