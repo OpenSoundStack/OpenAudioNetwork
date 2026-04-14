@@ -98,7 +98,7 @@ void NetworkMapper::mapper_update() {
 }
 
 void NetworkMapper::packet_recv_update() {
-    static LowLatPacket<MappingPacket> pck{};
+    LowLatPacket<MappingPacket> pck{};
     int rx_data = m_map_socket->receive_data(&pck, false);
 
     if(rx_data > 0 && pck.payload.header.type == PacketType::MAPPING) {
@@ -145,6 +145,10 @@ void NetworkMapper::mapper_process() {
 void NetworkMapper::process_packet(MappingPacket pck) {
     uint64_t now = local_now();
 
+    PeerInfos pinfo = {};
+    memcpy(&pinfo.peer_data, &pck.packet_data, sizeof(MappingData));
+    pinfo.alive_stamp = now;
+
     if(!m_peers.contains(pck.packet_data.self_uid)) {
 #ifdef __linux__
         std::cout << "Discovered " << pck.packet_data.dev_name << " (ID = " << pck.packet_data.self_uid << ")" << std::endl;
@@ -152,8 +156,6 @@ void NetworkMapper::process_packet(MappingPacket pck) {
         std::cout << "               " << (int)pck.packet_data.topo.phy_in_count << " ins" << std::endl;
         std::cout << "               " << (int)pck.packet_data.topo.pipes_count << " pipes" << std::endl;
 #endif // __linux__
-
-        PeerInfos pinfo = {pck.packet_data, now};
 
         {
 #ifndef NO_THREADS
@@ -175,7 +177,7 @@ void NetworkMapper::process_packet(MappingPacket pck) {
 #ifndef NO_THREADS
             std::lock_guard<std::mutex> m{m_mapper_mutex};
 #endif // NO_THREADS
-            m_peers[pck.packet_data.self_uid] = {pck.packet_data, now};
+            m_peers[pck.packet_data.self_uid] = pinfo;
         }
     }
 }
@@ -208,7 +210,7 @@ void NetworkMapper::update_resource_mapping(NodeTopology topo) {
 }
 
 std::optional<uint16_t> NetworkMapper::find_free_dsp() const {
-    for (auto peer : m_peers) {
+    for (auto& peer : m_peers) {
         PeerInfos infos = peer.second;
 
         // Each bit in the resource map represent a channel, 1 if used, 0 if not. If the pipe resource map is 0

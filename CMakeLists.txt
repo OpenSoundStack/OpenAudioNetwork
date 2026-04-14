@@ -9,7 +9,3 @@ endif (NO_THREADS)
 
 add_subdirectory(common)
 add_subdirectory(netutils)
-
-if(COMPILE_PEER)
-    add_subdirectory(peer)
-endif (COMPILE_PEER)

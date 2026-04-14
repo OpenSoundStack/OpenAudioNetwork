@@ -156,6 +156,7 @@ struct ControlPipeCreate {
     uint8_t stack_position;   /**< Position in pipe */
     uint8_t seq;              /**< Sequence number */
     uint8_t seq_max;          /**< Expected packet count for the whole creation instruction */
+    uint16_t pid;             /**< Pipe ID */
     char elem_type[32];       /**< Element type name to create */
 };
 
@@ -179,6 +180,7 @@ struct ControlData {
 struct ControlResponse {
     uint8_t response;             /**< Response code */
     uint8_t channel;              /**< Channel affected */
+    uint16_t pid;                 /**< Pipe/Transaction ID */
     char err_msg[64];             /**< Error message */
 };
 
