@@ -74,62 +74,59 @@ void AudioRouter::poll_audio_data(bool async) {
 
 void AudioRouter::poll_control_packets(bool async) {
     char raw_packet_buffer[256] = {0};
-    LowLatPacket<CommonHeader> header{};
+    auto* header = reinterpret_cast<LowLatPacket<CommonHeader>*>(raw_packet_buffer);
 
     int recv_bytes = m_control_iface->receive_data_raw(raw_packet_buffer, 128, async);
 
     if (recv_bytes <= 0) {
         return;
     } else {
-        // Getting the header for analysis
-        memcpy(&header, raw_packet_buffer, sizeof(LowLatPacket<CommonHeader>));
-
-        if (header.llhdr.dest_uid != m_self_uid) {
+        if (header->llhdr.dest_uid != m_self_uid) {
             return;
         }
 
         // If we don't know the sender yet, keep it in memory to avoid
         // responses to incoming packet to be dropped
-        if (!m_nmapper->get_mac_by_uid(header.llhdr.sender_uid).has_value()) {
+        if (!m_nmapper->get_mac_by_uid(header->llhdr.sender_uid).has_value()) {
             PeerInfos pinfos{};
-            pinfos.peer_data.self_uid = header.llhdr.sender_uid;
-            memcpy(&pinfos.peer_data.self_address, header.eth_header.h_source, 6);
+            pinfos.peer_data.self_uid = header->llhdr.sender_uid;
+            memcpy(&pinfos.peer_data.self_address, header->eth_header.h_source, 6);
 
-            m_nmapper->add_temp_peer(header.llhdr.sender_uid, pinfos);
+            m_nmapper->add_temp_peer(header->llhdr.sender_uid, pinfos);
         }
 
         // Packet switching
-        if (header.payload.type == PacketType::CONTROL_CREATE) {
+        if (header->payload.type == PacketType::CONTROL_CREATE) {
             ControlPipeCreatePacket packet_content{};
 
             // Extracting packet
-            packet_content.header = header.payload;
+            packet_content.header = header->payload;
             memcpy(&packet_content.packet_data, raw_packet_buffer + sizeof(LowLatPacket<CommonHeader>), sizeof(ControlPipeCreate));
 
-            m_pipe_create_callback(packet_content, header.llhdr);
-        } else if (header.payload.type == PacketType::CONTROL) {
+            m_pipe_create_callback(packet_content, header->llhdr);
+        } else if (header->payload.type == PacketType::CONTROL) {
             ControlPacket packet_content{};
 
             // Extracting packet
-            packet_content.header = header.payload;
+            packet_content.header = header->payload;
             memcpy(&packet_content.packet_data, raw_packet_buffer + sizeof(LowLatPacket<CommonHeader>), sizeof(ControlData));
 
-            m_channel_control_callback(packet_content, header.llhdr);
-        } else if (header.payload.type == PacketType::CONTROL_RESPONSE) {
+            m_channel_control_callback(packet_content, header->llhdr);
+        } else if (header->payload.type == PacketType::CONTROL_RESPONSE) {
             ControlResponsePacket packet_content{};
 
-            packet_content.header = header.payload;
+            packet_content.header = header->payload;
             memcpy(&packet_content.packet_data, raw_packet_buffer + sizeof(LowLatPacket<CommonHeader>), sizeof(ControlResponse));
 
-            m_control_response_callback(packet_content, header.llhdr);
-        } else if (header.payload.type == PacketType::CONTROL_QUERY) {
+            m_control_response_callback(packet_content, header->llhdr);
+        } else if (header->payload.type == PacketType::CONTROL_QUERY) {
             ControlQueryPacket packet_content{};
 
             // Extracting packet
-            packet_content.header = header.payload;
+            packet_content.header = header->payload;
             memcpy(&packet_content.packet_data, raw_packet_buffer + sizeof(LowLatPacket<CommonHeader>), sizeof(ControlQuery));
 
-            m_control_query_callback(packet_content, header.llhdr);
+            m_control_query_callback(packet_content, header->llhdr);
         }
     }
 }
