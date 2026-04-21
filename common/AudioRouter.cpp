@@ -101,6 +101,12 @@ void AudioRouter::poll_control_packets(bool async) {
         // Packet switching
         if (header->payload.type == PacketType::CONTROL_CREATE) {
             auto* pck_content = reinterpret_cast<LowLatPacket<ControlPipeCreatePacket>*>(raw_packet_buffer);
+            ControlPipeCreatePacket packet_content{};
+
+            // Extracting packet
+            packet_content.header = header->payload;
+            memcpy(&packet_content.packet_data, raw_packet_buffer + sizeof(LowLatPacket<CommonHeader>), sizeof(ControlPipeCreate));
+
             m_pipe_create_callback(pck_content);
         } else if (header->payload.type == PacketType::CONTROL) {
             ControlPacket packet_content{};
