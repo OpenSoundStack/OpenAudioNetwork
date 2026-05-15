@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <optional>
 #include <functional>
+#include <chrono>
 
 #include "netutils/LowLatSocket.h"
 #include "packet_structs.h"

@@ -244,7 +244,7 @@ std::optional<uint8_t> NetworkMapper::first_free_processing_channel(uint16_t uid
 }
 
 uint64_t NetworkMapper::local_now() {
-#ifdef __linux__
+#if defined(__linux__) || defined(__ZEPHYR__)
     return std::chrono::duration_cast<std::chrono::milliseconds>(
             std::chrono::high_resolution_clock::now().time_since_epoch()
     ).count();
@@ -254,7 +254,7 @@ uint64_t NetworkMapper::local_now() {
 }
 
 uint64_t NetworkMapper::local_now_us() {
-#ifdef __linux__
+#if defined(__linux__) || defined(__ZEPHYR__)
     return std::chrono::duration_cast<std::chrono::microseconds>(
             std::chrono::high_resolution_clock::now().time_since_epoch()
     ).count();

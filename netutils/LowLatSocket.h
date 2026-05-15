@@ -34,7 +34,11 @@ struct EthernetHeader {
 } __attribute__((packed));
 typedef EthernetHeader ethhdr;
 
+#ifndef __ZEPHYR__
 #define htons(x) ((((x) & 0xFF00) >> 8) | (((x) & 0x00FF) << 8))
+#else
+#include "zephyr/net/net_ip.h"
+#endif
 
 #endif //__linux__
 
