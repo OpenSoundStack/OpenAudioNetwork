@@ -119,4 +119,36 @@ int LowLatSocket::recv_data_internal(uint8_t *data, size_t size) const {
     return _recv_data(data, size, m_self_proto);
 }
 
+bool LowLatSocket::format_packet_header(uint8_t *packet_buffer, uint16_t dest_uid, size_t packet_size) {
+    INT_LLP<1>* llpck = reinterpret_cast<INT_LLP<1> *>(packet_buffer);
+    llpck->eth_header = m_hdr;
+    llpck->llhdr.dest_uid = dest_uid;
+    llpck->llhdr.sender_uid = m_self_uid;
+    llpck->llhdr.psize = packet_size;
+
+    if (dest_uid != 0) {
+        return write_packet_mac_addr(packet_buffer, dest_uid);
+    }
+
+    return true;
+}
+
+bool LowLatSocket::write_packet_mac_addr(uint8_t *packet_buffer, uint16_t dest_uid) {
+    auto mac = get_mac(dest_uid);
+
+    INT_LLP<1>* llpck = reinterpret_cast<INT_LLP<1> *>(packet_buffer);
+    llpck->llhdr.dest_uid = dest_uid;
+
+    if (mac.has_value()) {
+        uint64_t& v = mac.value();
+
+        uint64_t* addr = (uint64_t*)llpck->eth_header.h_dest;
+        addr[0] = v;
+
+        return true;
+    } else {
+        return false;
+    }
+}
+
 #endif // __linux__

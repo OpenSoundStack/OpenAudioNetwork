@@ -124,6 +124,22 @@ public:
     bool init_socket(std::string interface, EthProtocol proto);
 
     /**
+     * Format a given packet assuming it is a LowLatPacket<T> without sending it with the socket interface
+     * @param packet_buffer Packet buffer
+     * @param dest_uid Packet receiver UID
+     * @return true if successfully filled the header
+     */
+    bool format_packet_header(uint8_t* packet_buffer, uint16_t dest_uid, size_t packet_size);
+
+    /**
+     * Write in a given packet assuming it is a LowLatPacket<T>
+     * @param packet_buffer Packet buffer
+     * @param dest_uid Packet receiver UID
+     * @return true if successfully found MAC addr and wrote it to packet
+     */
+    bool write_packet_mac_addr(uint8_t* packet_buffer, uint16_t dest_uid);
+
+    /**
      * Sends some data on the network
      * @tparam T Sent data type
      * @param data Pointer to the data
@@ -133,10 +149,7 @@ public:
     template<class T>
     int send_data(const T& data, uint16_t dest_uid) {
         INT_LLP<sizeof(T)> llpck;
-        llpck.eth_header = m_hdr;
-        llpck.llhdr.dest_uid = dest_uid;
-        llpck.llhdr.sender_uid = m_self_uid;
-        llpck.llhdr.psize = sizeof(T);
+        format_packet_header((uint8_t*)&llpck, dest_uid, sizeof(T));
         memcpy(llpck.payload, &data, sizeof(T));
 
         if (dest_uid != 0) {
@@ -192,6 +205,16 @@ public:
 #else
         return recv_data_internal((uint8_t*)data, size);
 #endif // __linux__
+    }
+
+    /**
+     * Send raw packet on wiore without further processing
+     * @param data Packet data
+     * @param size Packet size
+     * @return Number of byte sent
+     */
+    int send_data_raw(char* data, size_t size) {
+        return send_data_internal((uint8_t*)data, size);
     }
 
 private:

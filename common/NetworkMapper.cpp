@@ -184,11 +184,15 @@ void NetworkMapper::process_packet(MappingPacket pck) {
 }
 
 std::optional<uint64_t> NetworkMapper::get_mac_by_uid(uint16_t uid) {
-    if (m_peers.contains(uid)) {
-        return m_peers[uid].peer_data.self_address;
-    } else if (m_temp_peers.contains(uid)) {
-        return m_temp_peers[uid].peer_data.self_address;
+    auto it = m_peers.find(uid);
+    if (it != m_peers.end()) {
+        return it->second.peer_data.self_address;
     } else {
+        auto temp_it = m_temp_peers.find(uid);
+        if (temp_it != m_temp_peers.end()) {
+            return temp_it->second.peer_data.self_address;
+        }
+
         return {};
     }
 }
