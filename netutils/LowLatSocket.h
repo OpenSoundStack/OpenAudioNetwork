@@ -34,7 +34,9 @@ struct EthernetHeader {
 } __attribute__((packed));
 typedef EthernetHeader ethhdr;
 
-#ifndef __ZEPHYR__
+#ifdef OAN_HOST_BACKENDS
+#include <arpa/inet.h>
+#elif !defined(__ZEPHYR__)
 #define htons(x) ((((x) & 0xFF00) >> 8) | (((x) & 0x00FF) << 8))
 #else
 #include "zephyr/net/net_ip.h"
@@ -150,17 +152,8 @@ public:
             }
         }
 
-#ifdef __linux__
-        return sendto(
-            m_socket,
-            &llpck, sizeof(llpck),
-            MSG_DONTWAIT,
-            (sockaddr*)&m_iface_addr,
-            sizeof(m_iface_addr)
-        );
-#else
-        return send_data_internal((uint8_t*)&llpck, sizeof(INT_LLP<sizeof(T)>));
-#endif // __linux__
+        return backend_send(reinterpret_cast<const uint8_t*>(&llpck),
+                            sizeof(INT_LLP<sizeof(T)>), dest_uid);
     }
 
     /**
@@ -172,11 +165,7 @@ public:
      */
     template<class T>
     int receive_data(T* data, bool async = true) {
-#ifdef __linux__
-        return recv(m_socket, data, sizeof(T), async ? MSG_DONTWAIT : 0);
-#else
-        return recv_data_internal((uint8_t*)data, sizeof(T));
-#endif // __linux__
+        return backend_recv(reinterpret_cast<uint8_t*>(data), sizeof(T), async);
     }
 
     /**
@@ -187,11 +176,7 @@ public:
      * @return Received byte count
      */
     int receive_data_raw(char* data, size_t size, bool async = true) const {
-#ifdef __linux__
-        return recv(m_socket, data, size, async ? MSG_DONTWAIT : 0);
-#else
-        return recv_data_internal((uint8_t*)data, size);
-#endif // __linux__
+        return backend_recv(reinterpret_cast<uint8_t*>(data), size, async);
     }
 
 private:
@@ -202,10 +187,13 @@ private:
      */
     std::optional<uint64_t> get_mac(uint16_t id);
 
-#ifndef __linux__
+    int backend_send(const uint8_t* data, size_t size, uint16_t dest_uid);
+    int backend_recv(uint8_t* data, size_t size, bool async) const;
+
+#if !defined(__linux__) && !defined(OAN_HOST_BACKENDS)
     int send_data_internal(uint8_t* data, size_t size);
     int recv_data_internal(uint8_t* data, size_t size) const;
-#endif // __linux__
+#endif
 
 #ifdef __linux__
     sockaddr_ll m_iface_addr{};
@@ -219,6 +207,10 @@ private:
     EthProtocol m_self_proto;
 
     std::shared_ptr<NetworkMapper> m_mapper;
+
+#ifdef OAN_HOST_BACKENDS
+    mutable std::unique_ptr<struct ITransport> m_transport;
+#endif
 };
 
 

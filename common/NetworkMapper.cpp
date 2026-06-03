@@ -5,12 +5,15 @@
 
 #include "NetworkMapper.h"
 
-#ifndef __linux__
-extern void _delay(uint32_t ms);
+#if !defined(__linux__) && !defined(OAN_HOST_BACKENDS)
 extern uint32_t _now_ms();
 extern uint64_t _now_us();
 extern "C" IfaceMeta _fetch_iface_meta(const std::string&);
-#endif // __linux__
+#endif
+
+#ifdef OAN_HOST_BACKENDS
+#include "netutils/transport/ITransport.h"
+#endif
 
 NetworkMapper::NetworkMapper(const PeerConf& pconf) {
     m_peer_change_callback = [](PeerInfos&, bool) {};
@@ -29,11 +32,13 @@ bool NetworkMapper::init_mapper(const std::string& iface) {
 }
 
 void NetworkMapper::update_packet(const PeerConf &pconf) {
-#ifdef __linux__
+#if defined(__linux__)
     auto iface_meta = get_iface_meta(pconf.iface);
+#elif defined(OAN_HOST_BACKENDS)
+    auto iface_meta = host_iface_meta(pconf.iface);
 #else
     auto iface_meta = _fetch_iface_meta(pconf.iface);
-#endif // __linux__
+#endif
 
     m_packet.header.type = PacketType::MAPPING;
     m_packet.packet_data.topo = pconf.topo;
@@ -244,7 +249,7 @@ std::optional<uint8_t> NetworkMapper::first_free_processing_channel(uint16_t uid
 }
 
 uint64_t NetworkMapper::local_now() {
-#if defined(__linux__) || defined(__ZEPHYR__)
+#if defined(__linux__) || defined(__ZEPHYR__) || defined(OAN_HOST_BACKENDS)
     return std::chrono::duration_cast<std::chrono::milliseconds>(
             std::chrono::high_resolution_clock::now().time_since_epoch()
     ).count();
@@ -254,7 +259,7 @@ uint64_t NetworkMapper::local_now() {
 }
 
 uint64_t NetworkMapper::local_now_us() {
-#if defined(__linux__) || defined(__ZEPHYR__)
+#if defined(__linux__) || defined(__ZEPHYR__) || defined(OAN_HOST_BACKENDS)
     return std::chrono::duration_cast<std::chrono::microseconds>(
             std::chrono::high_resolution_clock::now().time_since_epoch()
     ).count();
