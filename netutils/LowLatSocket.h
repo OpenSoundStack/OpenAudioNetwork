@@ -181,6 +181,13 @@ public:
 
     const uint8_t* get_self_mac() const { return m_hdr.h_source; }
 
+    // Block until this socket is readable or timeout_ms elapses. Lets RT
+    // loops on host backends pace themselves instead of spinning on
+    // EAGAIN. On Linux + AF_PACKET this is a no-op that returns 1
+    // immediately so the existing tight-loop semantics are unchanged.
+    // Returns 1 readable / 0 timeout / -1 error.
+    int wait_readable(int timeout_ms) const;
+
 private:
     /**
      * Finds a device MAC address based on its ID.

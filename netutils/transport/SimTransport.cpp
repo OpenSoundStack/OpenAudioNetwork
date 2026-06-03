@@ -327,6 +327,17 @@ int SimTransport::recv(uint8_t* data, size_t len, bool async) {
     }
 }
 
+int SimTransport::wait_readable(int timeout_ms) {
+    if (m_fd < 0) return -1;
+    pollfd p{m_fd, POLLIN, 0};
+    int r = ::poll(&p, 1, timeout_ms);
+    if (r < 0) {
+        if (errno == EINTR) return 0;  // treat as timeout — caller will retry
+        return -1;
+    }
+    return r;  // 0 = timeout, 1 = readable
+}
+
 void SimTransport::close() {
     if (m_fd >= 0) {
         ::close(m_fd);

@@ -20,6 +20,7 @@ public:
               uint16_t self_uid, IfaceMeta& out_meta) override;
     int  send(const uint8_t* data, size_t len, uint16_t dest_uid) override;
     int  recv(uint8_t* data, size_t len, bool async) override;
+    int  wait_readable(int timeout_ms) override;
     void close() override;
 
 private:

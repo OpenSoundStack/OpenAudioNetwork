@@ -20,6 +20,12 @@ public:
     void begin_sync_process();
     void sync_process();
 
+    // Block until a sync packet arrives or timeout_ms elapses.
+    // Lets the clock thread on host backends stop busy-polling the async recv.
+    int wait_sync_readable(int timeout_ms) const {
+        return m_sync_socket->wait_readable(timeout_ms);
+    }
+
 private:
     void start_clock_sync(PeerInfos& slave);
     void process_packet(ClockSyncPacket& csp, uint16_t originator);

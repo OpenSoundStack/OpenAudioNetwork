@@ -18,6 +18,12 @@ public:
     void sync_process();
     int64_t get_ck_offset();
 
+    // Block until a sync packet arrives or timeout_ms elapses. Lets the
+    // slave's clock thread on host backends stop busy-polling the async recv.
+    int wait_sync_readable(int timeout_ms) const {
+        return m_sync_socket->wait_readable(timeout_ms);
+    }
+
 private:
     void send_delay_req(uint16_t dest);
     void calc_ck_offset();

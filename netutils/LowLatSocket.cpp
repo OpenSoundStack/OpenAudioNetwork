@@ -135,6 +135,17 @@ int LowLatSocket::backend_recv(uint8_t* data, size_t size, bool async) const {
     return recv(m_socket, data, size, async ? MSG_DONTWAIT : 0);
 }
 
+int LowLatSocket::wait_readable(int timeout_ms) const {
+#ifdef OAN_HOST_BACKENDS
+    if (m_transport) {
+        return m_transport->wait_readable(timeout_ms);
+    }
+#endif
+    // Linux AF_PACKET path: keep tight-loop semantics from M3, no-op.
+    (void)timeout_ms;
+    return 1;
+}
+
 #elif defined(OAN_HOST_BACKENDS)
 
 LowLatSocket::LowLatSocket(uint16_t self_uid, std::shared_ptr<NetworkMapper> mapper) {
@@ -180,6 +191,11 @@ int LowLatSocket::backend_recv(uint8_t* data, size_t size, bool async) const {
     return m_transport->recv(data, size, async);
 }
 
+int LowLatSocket::wait_readable(int timeout_ms) const {
+    if (!m_transport) return -1;
+    return m_transport->wait_readable(timeout_ms);
+}
+
 #else  // Zephyr firmware path — unchanged from pre-M3
 
 IfaceMeta get_iface_meta(const std::string& name) {
@@ -218,6 +234,14 @@ int LowLatSocket::backend_send(const uint8_t* data, size_t size, uint16_t dest_u
 int LowLatSocket::backend_recv(uint8_t* data, size_t size, bool async) const {
     (void)async;
     return recv_data_internal(data, size);
+}
+
+int LowLatSocket::wait_readable(int timeout_ms) const {
+    // Zephyr firmware path: recv_data_internal is the blocking primitive,
+    // so we never busy-loop. Return readable immediately so any caller
+    // that pre-paces ends up calling recv right away.
+    (void)timeout_ms;
+    return 1;
 }
 
 int LowLatSocket::send_data_internal(uint8_t* data, size_t size) {
