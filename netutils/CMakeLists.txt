@@ -41,10 +41,10 @@ if(APPLE)
     target_link_options(oannetutils PRIVATE LINKER:-undefined,dynamic_lookup)
 elseif(UNIX)
     # LowLatSocket calls NetworkMapper::get_mac_by_uid, which lives in
-    # oancommon — and oancommon already links oannetutils, so we can't
-    # close the cycle at the CMake level. macOS' dynamic_lookup option
-    # papers over this; on Linux we tell ld to defer the symbol to load
-    # time. The engine binary always loads both .so's so the symbol
-    # resolves there.
-    target_link_options(oannetutils PRIVATE LINKER:--unresolved-symbols=ignore-in-shared-libs)
+    # oancommon — and oancommon already PUBLIC-links oannetutils, so we
+    # can't close the cycle by linking the other way at CMake level.
+    # Mac papers over this with -undefined,dynamic_lookup; the Linux
+    # equivalent is -z undefs (allow undefined symbols in this .so;
+    # they'll resolve at load time when the engine pulls in both .so's).
+    target_link_options(oannetutils PRIVATE LINKER:-z,undefs)
 endif()
