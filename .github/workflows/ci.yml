@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: ['**']
+
+jobs:
+  build:
+    name: ${{ matrix.os }} (host=${{ matrix.host_backends }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Linux: default Zephyr-firmware-shaped build (no host backends) is
+          # the path the firmware repos consume — keep it green.
+          - os: ubuntu-latest
+            host_backends: OFF
+          # Host-dev build path used by OALSEngine + sim_switch.
+          - os: ubuntu-latest
+            host_backends: ON
+          - os: macos-latest
+            host_backends: ON
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install deps (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends cmake ninja-build
+
+      - name: Install deps (macOS)
+        if: runner.os == 'macOS'
+        run: brew install cmake ninja
+
+      - name: Configure
+        run: |
+          cmake -G Ninja -B build \
+            -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+            -DOAN_HOST_BACKENDS=${{ matrix.host_backends }}
+
+      - name: Build
+        run: cmake --build build
