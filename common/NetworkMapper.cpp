@@ -11,10 +11,6 @@ extern uint64_t _now_us();
 extern "C" IfaceMeta _fetch_iface_meta(const std::string&);
 #endif
 
-#ifdef OAN_HOST_BACKENDS
-#include "netutils/transport/ITransport.h"
-#endif
-
 NetworkMapper::NetworkMapper(const PeerConf& pconf) {
     m_peer_change_callback = [](PeerInfos&, bool) {};
     update_packet(pconf);
@@ -27,15 +23,33 @@ NetworkMapper::~NetworkMapper() {
 bool NetworkMapper::init_mapper(const std::string& iface) {
     m_map_socket = std::make_unique<LowLatSocket>(m_packet.packet_data.self_uid, std::shared_ptr<NetworkMapper>{});
     bool res = m_map_socket->init_socket(iface, EthProtocol::ETH_PROTO_OANDISCO);
+    if (!res) return false;
 
-    return res;
+#ifdef OAN_HOST_BACKENDS
+    // On the host-backend path, the transport (sim/raw-mac) supplies the
+    // device MAC — there is no real interface to query. The MAC in
+    // m_packet was zero-filled by update_packet() at construction; fill it
+    // now from the socket whose transport just learned it.
+    m_packet.packet_data.self_address = 0;
+    memcpy(&m_packet.packet_data.self_address, m_map_socket->get_self_mac(), 6);
+#endif
+
+    return true;
 }
 
 void NetworkMapper::update_packet(const PeerConf &pconf) {
 #if defined(__linux__)
     auto iface_meta = get_iface_meta(pconf.iface);
 #elif defined(OAN_HOST_BACKENDS)
-    auto iface_meta = host_iface_meta(pconf.iface);
+    // Skip the iface lookup entirely: pconf.iface may be a transport prefix
+    // (sim:default, raw:en0) for which no real OS-level lookup makes sense.
+    IfaceMeta iface_meta{};
+    // If we already have a socket (i.e. update_packet is being re-run after
+    // init_mapper), preserve the MAC the transport learned. Otherwise leave
+    // zero and let init_mapper fill it in once the socket is bound.
+    if (m_map_socket) {
+        memcpy(iface_meta.mac, m_map_socket->get_self_mac(), 6);
+    }
 #else
     auto iface_meta = _fetch_iface_meta(pconf.iface);
 #endif

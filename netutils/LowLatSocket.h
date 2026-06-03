@@ -179,6 +179,8 @@ public:
         return backend_recv(reinterpret_cast<uint8_t*>(data), size, async);
     }
 
+    const uint8_t* get_self_mac() const { return m_hdr.h_source; }
+
 private:
     /**
      * Finds a device MAC address based on its ID.
