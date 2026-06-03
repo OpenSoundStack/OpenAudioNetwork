@@ -26,7 +26,7 @@
 namespace {
 
 constexpr uint32_t SIM_MAGIC          = 0x4F535354;  // 'OSST'
-constexpr uint8_t  SIM_VERSION        = 1;
+constexpr uint8_t  SIM_VERSION        = 2;
 constexpr uint32_t MAX_FRAME_PAYLOAD  = 8192;        // matches sim_switch
 
 struct SimHello {
@@ -35,13 +35,15 @@ struct SimHello {
     uint8_t  _pad;
     uint16_t ethertype;
     uint16_t self_uid;
-    uint16_t _reserved;
+    uint16_t flags;          // SIM_HELLO_PROMISCUOUS etc. — engine never sets any.
 } __attribute__((packed));
 
 struct SimFrame {
     uint32_t payload_len;
     uint16_t ethertype;
     uint16_t dest_uid;
+    uint16_t src_uid;        // switch overwrites; sender writes 0
+    uint16_t _pad;
 } __attribute__((packed));
 
 bool parse_mac(const std::string& s, uint8_t out[6]) {
@@ -171,7 +173,7 @@ bool SimTransport::open(const std::string& iface, EthProtocol proto,
         0,
         static_cast<uint16_t>(proto),
         self_uid,
-        0
+        0       // flags — engine never sets PROMISCUOUS
     };
     ssize_t hn = ::send(m_fd, &h, sizeof(h), 0);
     if (hn != static_cast<ssize_t>(sizeof(h))) {
@@ -216,7 +218,9 @@ int SimTransport::send(const uint8_t* data, size_t len, uint16_t dest_uid) {
     SimFrame hdr{
         static_cast<uint32_t>(len),
         static_cast<uint16_t>(m_proto),
-        dest_uid
+        dest_uid,
+        0,   // src_uid: switch populates from our hello
+        0
     };
 
     iovec iov[2] = {

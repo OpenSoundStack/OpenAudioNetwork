@@ -35,7 +35,7 @@ private:
     uint16_t    m_self_uid{0};
 
     bool                 m_have_hdr{false};
-    uint8_t              m_hdr_buf[8]{};       // sizeof(SimFrame) == 8
+    uint8_t              m_hdr_buf[12]{};      // sizeof(SimFrame) == 12 (v2)
     size_t               m_hdr_read{0};
     std::vector<uint8_t> m_body_buf;
     size_t               m_body_read{0};
