@@ -5,6 +5,10 @@
 
 #include "NetworkMapper.h"
 
+#if defined(__linux__) || defined(OAN_HOST_BACKENDS)
+#include <unistd.h>
+#endif
+
 #if !defined(__linux__) && !defined(OAN_HOST_BACKENDS)
 extern uint32_t _now_ms();
 extern uint64_t _now_us();
@@ -132,11 +136,9 @@ void NetworkMapper::packet_send_update() {
 void NetworkMapper::packet_sender() {
     while(true) {
         packet_send_update();
-#ifdef __linux__
+#if defined(__linux__) || defined(OAN_HOST_BACKENDS)
         usleep(5000000);
-#else
-
-#endif // __linux__
+#endif
     }
 }
 
@@ -155,9 +157,9 @@ void NetworkMapper::mapper_process() {
             mapper_update();
         }
 
-#ifdef __linux__
+#if defined(__linux__) || defined(OAN_HOST_BACKENDS)
         usleep(1000000);
-#endif // __linux__
+#endif
     }
 }
 
