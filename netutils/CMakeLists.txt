@@ -37,14 +37,15 @@ endif (EMBEDDED_BUILD)
 
 target_include_directories(oannetutils PUBLIC ${PROJECT_SOURCE_DIR})
 
+# oannetutils and oancommon have a mutual symbol dependency:
+# LowLatSocket (in netutils) calls NetworkMapper::get_mac_by_uid
+# (in common), and common's ClockMaster/ClockSlave/AudioRouter all
+# instantiate LowLatSocket. CMake forbids cyclic target_link_libraries
+# on shared libs, so we relax each library's own link step (the symbol
+# is unresolved in the .so but always resolved at exe link time when
+# both .so's appear on the line — see executables that link them).
 if(APPLE)
     target_link_options(oannetutils PRIVATE LINKER:-undefined,dynamic_lookup)
 elseif(UNIX)
-    # LowLatSocket calls NetworkMapper::get_mac_by_uid, which lives in
-    # oancommon — and oancommon already PUBLIC-links oannetutils, so we
-    # can't close the cycle by linking the other way at CMake level.
-    # Mac papers over this with -undefined,dynamic_lookup; the Linux
-    # equivalent is -z undefs (allow undefined symbols in this .so;
-    # they'll resolve at load time when the engine pulls in both .so's).
     target_link_options(oannetutils PRIVATE LINKER:-z,undefs)
 endif()
