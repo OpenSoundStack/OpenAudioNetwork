@@ -20,5 +20,20 @@ if(OAN_HOST_BACKENDS)
     add_compile_definitions(OAN_HOST_BACKENDS)
 endif()
 
+# OAN_UID_AUTOCONF: enables the boot-time UID autoconfiguration path in
+# NetworkMapper. Default OFF in phase 1 — wiring + structs are compiled
+# in unconditionally, but the algorithm only runs when this flag is set.
+# See Docs/proposals/uid-autoconfiguration.md and -impl.md.
+option(OAN_UID_AUTOCONF "Enable UID autoconfiguration (phase 1: opt-in)" OFF)
+if(OAN_UID_AUTOCONF)
+    add_compile_definitions(OAN_UID_AUTOCONF)
+endif()
+
 add_subdirectory(common)
 add_subdirectory(netutils)
+
+option(OAN_BUILD_TESTS "Build OAN unit tests" ON)
+if(OAN_BUILD_TESTS AND NOT EMBEDDED_BUILD)
+    enable_testing()
+    add_subdirectory(test)
+endif()

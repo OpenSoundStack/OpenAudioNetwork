@@ -11,6 +11,14 @@ set(OAN_COMMON_SOURCES
         clock.h
         ClockSlave.cpp
         ClockSlave.h
+        IDiscoverySocket.h
+        IUidClock.h
+        IUidClock.cpp
+        LowLatDiscoverySocket.h
+        UidAutoconfigurator.h
+        UidAutoconfigurator.cpp
+        UidStore.h
+        UidStore.cpp
         ../peer/peer_conf.h
 )
 

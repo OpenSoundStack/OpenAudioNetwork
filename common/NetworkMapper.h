@@ -24,6 +24,10 @@
 
 #include "peer/peer_conf.h"
 
+#ifdef OAN_UID_AUTOCONF
+#include "UidStore.h"
+#endif
+
 /**
  * @struct PeerInfos
  * @brief Stores other visible devices infos
@@ -52,6 +56,36 @@ public:
      * @return true if initialization succeeds
      */
     bool init_mapper(const std::string& iface);
+
+#ifdef OAN_UID_AUTOCONF
+    /**
+     * Run the boot-time UID autoconfiguration algorithm.
+     *
+     * MUST be called after init_mapper() (so the discovery socket and
+     * MAC are populated) and BEFORE launch_mapping_process() (so the
+     * peer hasn't started advertising yet).
+     *
+     * The committed UID is written into this mapper's outgoing mapping
+     * packet. Callers that hold their own copy of the UID (e.g. NetMan,
+     * io_sim) should read it back via committed_uid() and reconstruct
+     * any LowLatSocket/ClockMaster/ClockSlave instances that captured
+     * the old value at construction time.
+     *
+     * The hint UID is taken from the PeerConf passed to the constructor:
+     * a static-range hint bypasses the algorithm and commits the hint
+     * directly; a dynamic-range hint is ignored (autoconfiguration
+     * decides). Pass 0 in PeerConf::uid to indicate "no hint".
+     *
+     * @return committed UID, or 0 on hard failure (treat as fatal)
+     */
+    uint16_t autoconfigure_uid(IUidStore& store);
+
+    /**
+     * Current committed UID. Equal to PeerConf::uid before autoconfig
+     * runs; equal to the algorithm's committed value after.
+     */
+    uint16_t committed_uid() const { return m_packet.packet_data.self_uid; }
+#endif
 
     /**
      * Launch two threads which scan and map the network

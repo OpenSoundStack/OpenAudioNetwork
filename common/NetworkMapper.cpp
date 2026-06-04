@@ -9,6 +9,14 @@
 #include <unistd.h>
 #endif
 
+#ifdef OAN_UID_AUTOCONF
+#include "IUidClock.h"
+#include "LowLatDiscoverySocket.h"
+#include "UidAutoconfigurator.h"
+#endif
+
+#include <iostream>
+
 #if !defined(__linux__) && !defined(OAN_HOST_BACKENDS)
 extern uint32_t _now_ms();
 extern uint64_t _now_us();
@@ -40,6 +48,47 @@ bool NetworkMapper::init_mapper(const std::string& iface) {
 
     return true;
 }
+
+#ifdef OAN_UID_AUTOCONF
+uint16_t NetworkMapper::autoconfigure_uid(IUidStore& store) {
+    if (!m_map_socket) {
+        std::cerr << "NetworkMapper::autoconfigure_uid called before init_mapper"
+                  << std::endl;
+        return 0;
+    }
+
+    uint8_t self_mac[6];
+    memcpy(self_mac, m_map_socket->get_self_mac(), 6);
+
+    // Treat current PeerConf-supplied UID as the hint. The configurator
+    // honours static-range hints, ignores dynamic-range hints.
+    const uint16_t hint = m_packet.packet_data.self_uid;
+
+    LowLatDiscoverySocket disc(*m_map_socket);
+    RealUidClock clk;
+    UidAutoconfigurator cfg(self_mac, hint, store, disc, clk);
+    auto result = cfg.run();
+
+    if (result.committed_uid == 0) {
+        std::cerr << "NetworkMapper::autoconfigure_uid: failed to commit a UID"
+                  << std::endl;
+        return 0;
+    }
+
+    // Patch the outgoing mapping packet with the committed UID. Callers
+    // hold downstream constructs (LowLatSocket, ClockMaster) that captured
+    // the old UID; they must reconstruct them after reading committed_uid().
+    m_packet.packet_data.self_uid = result.committed_uid;
+
+    std::cout << "UID autoconfigured: 0x" << std::hex << result.committed_uid
+              << std::dec << " (salt=" << (int)result.salt_used
+              << ", persisted=" << (result.used_persisted ? "yes" : "no")
+              << ", collision=" << (result.had_collision ? "yes" : "no") << ")"
+              << std::endl;
+
+    return result.committed_uid;
+}
+#endif
 
 void NetworkMapper::update_packet(const PeerConf &pconf) {
 #if defined(__linux__)
@@ -121,11 +170,44 @@ void NetworkMapper::mapper_update() {
 }
 
 void NetworkMapper::packet_recv_update() {
+    // Sized to the largest payload we expect on the discovery EtherType.
+    // MappingPacket is the biggest of {MappingPacket, UidProbePacket,
+    // UidDefendPacket}, so reading into a buffer of that size and
+    // dispatching by header type is safe for all three.
     LowLatPacket<MappingPacket> pck{};
     int rx_data = m_map_socket->receive_data(&pck, false);
+    if (rx_data <= 0) return;
 
-    if(rx_data > 0 && pck.payload.header.type == PacketType::MAPPING) {
+    switch (pck.payload.header.type) {
+    case PacketType::MAPPING:
         process_packet(pck.payload);
+        break;
+#ifdef OAN_UID_AUTOCONF
+    case PacketType::UID_PROBE: {
+        // Reinterpret as a probe packet — same outer LowLat layout, smaller
+        // payload (UidProbePacket fits inside the MappingPacket-sized
+        // receive buffer). Defend if the probed UID matches ours and the
+        // prober is not us.
+        const auto* probe = reinterpret_cast<const LowLatPacket<UidProbePacket>*>(&pck);
+        uint64_t self_mac = m_packet.packet_data.self_address;
+        if (probe->payload.packet_data.candidate_uid == m_packet.packet_data.self_uid
+            && probe->payload.packet_data.src_mac != self_mac) {
+            UidDefendPacket def{};
+            def.header.type = PacketType::UID_DEFEND;
+            def.packet_data.defended_uid = m_packet.packet_data.self_uid;
+            def.packet_data.src_mac = self_mac;
+            def.packet_data.since_us = local_now_us();
+            if (m_map_socket) m_map_socket->send_data(def, /*dest_uid=*/0);
+        }
+        break;
+    }
+    case PacketType::UID_DEFEND:
+        // Post-commit, we don't act on defends we receive — only the
+        // boot-time configurator cares about them. Drop silently.
+        break;
+#endif
+    default:
+        break;
     }
 }
 
@@ -165,6 +247,28 @@ void NetworkMapper::mapper_process() {
 
 void NetworkMapper::process_packet(MappingPacket pck) {
     uint64_t now = local_now();
+
+#ifdef OAN_UID_AUTOCONF
+    // Runtime defence: if a peer is claiming OUR UID from a different MAC,
+    // emit a UID_DEFEND and refuse to enter the impostor into the peer
+    // table. Defender-wins per design §2.6.
+    if (pck.packet_data.self_uid == m_packet.packet_data.self_uid
+        && pck.packet_data.self_address != m_packet.packet_data.self_address
+        && pck.packet_data.self_address != 0) {
+        UidDefendPacket def{};
+        def.header.type = PacketType::UID_DEFEND;
+        def.packet_data.defended_uid = m_packet.packet_data.self_uid;
+        def.packet_data.src_mac = m_packet.packet_data.self_address;
+        def.packet_data.since_us = local_now_us();
+        if (m_map_socket) m_map_socket->send_data(def, /*dest_uid=*/0);
+
+        std::cerr << "UID defence: refused mapping from MAC 0x" << std::hex
+                  << pck.packet_data.self_address << std::dec
+                  << " claiming our UID 0x" << std::hex
+                  << m_packet.packet_data.self_uid << std::dec << std::endl;
+        return;
+    }
+#endif
 
     PeerInfos pinfo = {};
     memcpy(&pinfo.peer_data, &pck.packet_data, sizeof(MappingData));

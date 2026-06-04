@@ -26,7 +26,9 @@ enum class PacketType : uint32_t {
     CONTROL_RESPONSE,   /**< Response to a control command */
     CONTROL_QUERY,      /**< Device request */
     AUDIO,              /**< Audio data packets */
-    CLOCK_SYNC          /**< Time sync between devices */
+    CLOCK_SYNC,         /**< Time sync between devices */
+    UID_PROBE,          /**< Boot-time UID claim probe @see UidProbeData */
+    UID_DEFEND          /**< Incumbent defends its committed UID @see UidDefendData */
 };
 
 /**
@@ -212,6 +214,34 @@ struct ClockSync {
     uint8_t packet_state;
 };
 
+/**
+ * @struct UidProbeData
+ * @brief Boot-time probe asking the segment "is anyone using this UID?".
+ *
+ * Sent broadcast on the discovery EtherType (0x0682). The candidate UID
+ * is not yet committed; receivers MUST NOT enter it into their peer
+ * table on the basis of a probe alone.
+ */
+struct UidProbeData {
+    uint16_t candidate_uid;     /**< UID the sender is trying to claim */
+    uint64_t src_mac;           /**< Sender MAC, low 48 bits */
+    uint8_t  salt;              /**< Diagnostic only; not authoritative */
+    uint8_t  __padding__[5];
+} __attribute__((packed));
+
+/**
+ * @struct UidDefendData
+ * @brief Incumbent's response to a probe or to a peer claiming an in-use UID.
+ *
+ * Sent broadcast. Defender-wins rule: the incumbent NEVER renumbers in
+ * response to a runtime collision; the newcomer salt-walks instead.
+ */
+struct UidDefendData {
+    uint16_t defended_uid;      /**< UID the sender currently holds */
+    uint64_t src_mac;           /**< Sender (incumbent) MAC, low 48 bits */
+    uint64_t since_us;          /**< Local timestamp of original commit; diagnostic */
+} __attribute__((packed));
+
 typedef OANPacket<MappingData> MappingPacket;                   /**< Full OAN Packet for mapping data */
 typedef OANPacket<AudioData> AudioPacket;                       /**< Full OAN Packet for audio data */
 typedef OANPacket<ControlData> ControlPacket;                   /**< Full OAN Packet for control data */
@@ -219,5 +249,7 @@ typedef OANPacket<ControlPipeCreate> ControlPipeCreatePacket;   /**< Full OAN Pa
 typedef OANPacket<ControlResponse> ControlResponsePacket;       /**< Full OAN Packet for control response */
 typedef OANPacket<ControlQuery> ControlQueryPacket;             /**< Full OAN Packet for control query */
 typedef OANPacket<ClockSync> ClockSyncPacket;                   /**< Full OAN Packet for clock synchronization between devices */
+typedef OANPacket<UidProbeData> UidProbePacket;                 /**< Full OAN Packet for UID probe */
+typedef OANPacket<UidDefendData> UidDefendPacket;               /**< Full OAN Packet for UID defend */
 
 #endif //OPENAUDIONETWORK_PACKET_STRUCTS_H
