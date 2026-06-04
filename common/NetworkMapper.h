@@ -24,9 +24,7 @@
 
 #include "peer/peer_conf.h"
 
-#ifdef OAN_UID_AUTOCONF
 #include "UidStore.h"
-#endif
 
 /**
  * @struct PeerInfos
@@ -57,7 +55,6 @@ public:
      */
     bool init_mapper(const std::string& iface);
 
-#ifdef OAN_UID_AUTOCONF
     /**
      * Run the boot-time UID autoconfiguration algorithm.
      *
@@ -85,7 +82,6 @@ public:
      * runs; equal to the algorithm's committed value after.
      */
     uint16_t committed_uid() const { return m_packet.packet_data.self_uid; }
-#endif
 
     /**
      * Launch two threads which scan and map the network

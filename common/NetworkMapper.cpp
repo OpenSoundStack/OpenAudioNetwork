@@ -9,11 +9,9 @@
 #include <unistd.h>
 #endif
 
-#ifdef OAN_UID_AUTOCONF
 #include "IUidClock.h"
 #include "LowLatDiscoverySocket.h"
 #include "UidAutoconfigurator.h"
-#endif
 
 #include <iostream>
 
@@ -49,7 +47,6 @@ bool NetworkMapper::init_mapper(const std::string& iface) {
     return true;
 }
 
-#ifdef OAN_UID_AUTOCONF
 uint16_t NetworkMapper::autoconfigure_uid(IUidStore& store) {
     if (!m_map_socket) {
         std::cerr << "NetworkMapper::autoconfigure_uid called before init_mapper"
@@ -88,7 +85,6 @@ uint16_t NetworkMapper::autoconfigure_uid(IUidStore& store) {
 
     return result.committed_uid;
 }
-#endif
 
 void NetworkMapper::update_packet(const PeerConf &pconf) {
 #if defined(__linux__)
@@ -182,7 +178,6 @@ void NetworkMapper::packet_recv_update() {
     case PacketType::MAPPING:
         process_packet(pck.payload);
         break;
-#ifdef OAN_UID_AUTOCONF
     case PacketType::UID_PROBE: {
         // Reinterpret as a probe packet — same outer LowLat layout, smaller
         // payload (UidProbePacket fits inside the MappingPacket-sized
@@ -205,7 +200,6 @@ void NetworkMapper::packet_recv_update() {
         // Post-commit, we don't act on defends we receive — only the
         // boot-time configurator cares about them. Drop silently.
         break;
-#endif
     default:
         break;
     }
@@ -248,7 +242,6 @@ void NetworkMapper::mapper_process() {
 void NetworkMapper::process_packet(MappingPacket pck) {
     uint64_t now = local_now();
 
-#ifdef OAN_UID_AUTOCONF
     // Runtime defence: if a peer is claiming OUR UID from a different MAC,
     // emit a UID_DEFEND and refuse to enter the impostor into the peer
     // table. Defender-wins per design §2.6.
@@ -268,7 +261,6 @@ void NetworkMapper::process_packet(MappingPacket pck) {
                   << m_packet.packet_data.self_uid << std::dec << std::endl;
         return;
     }
-#endif
 
     PeerInfos pinfo = {};
     memcpy(&pinfo.peer_data, &pck.packet_data, sizeof(MappingData));
