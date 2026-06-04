@@ -60,6 +60,10 @@ enum class ControlQueryType : uint32_t {
     PHY_OUT_MAP,        /**< Get the map of free physical out in the device */
     PIPES_MAP,          /**< Get the map of free processing pipes in the device */
     PIPE_ALLOC_RESET,   /**< Reset pipes and channel allocator in device */
+    SET_AUDIO_DEST,     /**< Source peer: stamp this dest_uid into outgoing audio. dest_uid carried in response[0] low 16 bits. */
+    CLEAR_AUDIO_DEST,   /**< Source peer: stop sending audio. */
+    SET_INPUT_ROUTE,    /**< Target peer: when audio arrives from src_uid with packet ch=src_ch, feed it into local pipe dest_pipe. response[0]=src_uid|(src_ch<<16), response[1]=dest_pipe. */
+    CLEAR_INPUT_ROUTE,  /**< Target peer: drop the route entry on local pipe dest_pipe. response[1]=dest_pipe. */
 };
 
 /**
@@ -188,12 +192,18 @@ struct ControlResponse {
 
 /**
  * @struct ControlQuery
- * @brief Query useful infos to any device
+ * @brief Query useful infos to any device.
+ *
+ * @note Despite the field name, @c response is also used as the
+ * request-side payload slot for newer query types — see the
+ * dynamic-routing proposal (Docs/proposals/dynamic-routing.md) where
+ * SET_AUDIO_DEST / SET_INPUT_ROUTE pack their arguments into
+ * response[0..1]. The interpretation of @c response is per-qtype.
  */
 struct ControlQuery {
     ControlQueryType qtype;     /**< Type of the query */
     uint32_t flags;             /**< Additional flags */
-    uint32_t response[4];       /**< Device response */
+    uint32_t response[4];       /**< Per-qtype payload (request and/or response) */
 };
 
 /**

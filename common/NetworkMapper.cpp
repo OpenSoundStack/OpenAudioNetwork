@@ -400,6 +400,25 @@ std::vector<uint16_t> NetworkMapper::find_all_control_surfaces() {
     return surfaces;
 }
 
+std::vector<PeerInfos> NetworkMapper::find_all_by_type(DeviceType type) const {
+    std::vector<PeerInfos> out;
+    for (const auto& device : m_peers) {
+        if (device.second.peer_data.type == type) {
+            out.push_back(device.second);
+        }
+    }
+    return out;
+}
+
+std::vector<PeerInfos> NetworkMapper::find_all_peers() const {
+    std::vector<PeerInfos> out;
+    out.reserve(m_peers.size());
+    for (const auto& device : m_peers) {
+        out.push_back(device.second);
+    }
+    return out;
+}
+
 void NetworkMapper::set_peer_change_callback(std::function<void(PeerInfos &, bool)> callback) {
     m_peer_change_callback = std::move(callback);
 }

@@ -134,6 +134,18 @@ public:
     std::vector<uint16_t> find_all_control_surfaces();
 
     /**
+     * Finds all peers of a given DeviceType.
+     * @param type Device type to filter on
+     * @return The list of matching peers (full PeerInfos, copied)
+     */
+    std::vector<PeerInfos> find_all_by_type(DeviceType type) const;
+
+    /**
+     * Returns all currently known peers (any DeviceType).
+     */
+    std::vector<PeerInfos> find_all_peers() const;
+
+    /**
      * Install a callback called whenever a peer changes
      *
      * Callback signature void callback(PeerInfos& peer, bool peer_state)
