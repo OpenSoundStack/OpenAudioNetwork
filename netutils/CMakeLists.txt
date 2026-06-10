@@ -3,6 +3,8 @@ set(OAN_UTILS_SOURCES
         udp.h
         LowLatSocket.cpp
         LowLatSocket.h
+        rt.h
+        rt.cpp
 )
 
 if(EMBEDDED_BUILD)
