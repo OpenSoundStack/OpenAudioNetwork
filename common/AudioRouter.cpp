@@ -33,29 +33,14 @@ bool AudioRouter::init_router(const std::string &eth_interface, const std::share
 }
 
 void AudioRouter::poll_local_audio_buffer() {
-    bool local_fifo_empty = false;
     AudioPacket local_packet;
 
-    while (!local_fifo_empty) {
-        {
-#ifndef NO_THREADS
-            std::unique_lock<std::shared_mutex> __lock{m_local_fifo_mutex};
-#endif // NO_THREADS
-            local_fifo_empty = m_local_audio_fifo.empty();
+    while (m_local_audio_fifo.try_dequeue(local_packet)) {
+        LowLatHeader llhdr{};
+        llhdr.sender_uid = m_self_uid;
+        llhdr.dest_uid = m_self_uid;
 
-            if (!local_fifo_empty) {
-                local_packet = m_local_audio_fifo.front();
-                m_local_audio_fifo.pop();
-            }
-        }
-
-        if (!local_fifo_empty) {
-            LowLatHeader llhdr{};
-            llhdr.sender_uid = m_self_uid;
-            llhdr.dest_uid = m_self_uid;
-
-            m_routing_callback(local_packet, llhdr);
-        }
+        m_routing_callback(local_packet, llhdr);
     }
 }
 
@@ -135,10 +120,7 @@ void AudioRouter::send_audio_packet(const AudioPacket &packet, uint16_t dest_uid
     if (dest_uid != m_self_uid) {
         m_audio_iface->send_data(packet, dest_uid);
     } else {
-#ifndef NO_THREADS
-        std::unique_lock<std::shared_mutex> __lock{m_local_fifo_mutex};
-#endif // NO_THREADS
-        m_local_audio_fifo.push(packet);
+        m_local_audio_fifo.enqueue(packet);
     }
 }
 

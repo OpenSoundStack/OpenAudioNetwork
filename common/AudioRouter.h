@@ -6,6 +6,7 @@
 #ifndef AUDIOROUTER_H
 #define AUDIOROUTER_H
 
+#include "third_party/concurrentqueue.h"
 #include "netutils/LowLatSocket.h"
 #include "packet_structs.h"
 
@@ -42,13 +43,9 @@ private:
     std::unique_ptr<LowLatSocket> m_control_iface;
     uint16_t m_self_uid;
 
-    std::queue<AudioPacket> m_local_audio_fifo;
+    moodycamel::ConcurrentQueue<AudioPacket> m_local_audio_fifo;
 
     std::shared_ptr<NetworkMapper> m_nmapper;
-
-#ifndef NO_THREADS
-    std::shared_mutex m_local_fifo_mutex;
-#endif // NO_THREADS
 protected:
     std::function<void(AudioPacket&, LowLatHeader&)> m_routing_callback;
     std::function<void(ControlPacket&, LowLatHeader&)> m_channel_control_callback;
