@@ -214,7 +214,17 @@ public:
      * @return Number of byte sent
      */
     int send_data_raw(char* data, size_t size) {
-        return send_data_internal((uint8_t*)data, size);
+        #ifdef __linux__
+            return sendto(
+                m_socket,
+                data, size,
+                MSG_DONTWAIT,
+                (sockaddr*)&m_iface_addr,
+                sizeof(m_iface_addr)
+            );
+        #else
+            return send_data_internal((uint8_t*)data, size);
+        #endif // __linux__
     }
 
 private:

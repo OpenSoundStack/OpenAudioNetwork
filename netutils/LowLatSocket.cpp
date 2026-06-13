@@ -119,6 +119,8 @@ int LowLatSocket::recv_data_internal(uint8_t *data, size_t size) const {
     return _recv_data(data, size, m_self_proto);
 }
 
+#endif // __linux__
+
 bool LowLatSocket::format_packet_header(uint8_t *packet_buffer, uint16_t dest_uid, size_t packet_size) {
     INT_LLP<1>* llpck = reinterpret_cast<INT_LLP<1> *>(packet_buffer);
     llpck->eth_header = m_hdr;
@@ -150,5 +152,3 @@ bool LowLatSocket::write_packet_mac_addr(uint8_t *packet_buffer, uint16_t dest_u
         return false;
     }
 }
-
-#endif // __linux__
