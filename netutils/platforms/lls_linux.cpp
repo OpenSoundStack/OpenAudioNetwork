@@ -3,13 +3,10 @@
 //
 // This project is distributed under the Creative Commons CC-BY-NC-SA licence. https://creativecommons.org/licenses/by-nc-sa/4.0
 
-#include "LowLatSocket.h"
+#include "lls_linux.h"
 #include "common/NetworkMapper.h"
 
-#ifndef __linux__
-extern "C" int _send_data(uint8_t* data, size_t data_len);
-extern "C" int _recv_data(uint8_t* data_out, size_t data_size, EthProtocol filt_proto);
-#endif // __linux__
+#ifdef __linux__
 
 std::optional<uint64_t> LowLatSocket::get_mac(uint16_t id) {
     return m_mapper->get_mac_by_uid(id);
@@ -152,3 +149,5 @@ bool LowLatSocket::write_packet_mac_addr(uint8_t *packet_buffer, uint16_t dest_u
         return false;
     }
 }
+
+#endif // __linux__

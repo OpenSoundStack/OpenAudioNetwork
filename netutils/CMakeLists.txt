@@ -1,10 +1,14 @@
 set(OAN_UTILS_SOURCES
         udp.cpp
         udp.h
-        LowLatSocket.cpp
         LowLatSocket.h
         rt.h
         rt.cpp
+        platforms/lls_linux.h
+        lls_common.h
+        platforms/lls_linux.cpp
+        platforms/lls_zephyr.h
+        platforms/lls_zephyr.cpp
 )
 
 if(EMBEDDED_BUILD)
