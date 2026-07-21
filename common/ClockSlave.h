@@ -16,7 +16,7 @@ public:
     ~ClockSlave() = default;
 
     void sync_process();
-    int64_t get_ck_offset();
+    int64_t get_ck_offset() const;
 
 private:
     void send_delay_req(uint16_t dest);

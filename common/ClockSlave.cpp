@@ -18,6 +18,7 @@ ClockSlave::ClockSlave(uint16_t self_uid, const std::string &iface, std::shared_
     }
 
     m_nmapper = nmapper;
+    m_ck_offset = 0;
 }
 
 void ClockSlave::sync_process() {
@@ -60,6 +61,6 @@ void ClockSlave::calc_ck_offset() {
     m_ck_offset = (delay1 - delay2) / 2;
 }
 
-int64_t ClockSlave::get_ck_offset() {
+int64_t ClockSlave::get_ck_offset() const {
     return m_ck_offset;
 }
