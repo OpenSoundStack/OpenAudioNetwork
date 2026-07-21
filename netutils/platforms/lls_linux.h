@@ -6,7 +6,7 @@
 #ifndef LLSLINUX_H
 #define LLSLINUX_H
 
-#ifdef __linux__
+#if defined(__linux__) && !defined(BUILD_XDP_BACKEND)
 
 #include <string>
 #include <cstring>
