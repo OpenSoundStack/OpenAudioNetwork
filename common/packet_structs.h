@@ -26,12 +26,13 @@ enum class PacketType : uint32_t {
     CONTROL_RESPONSE,   /**< Response to a control command */
     CONTROL_QUERY,      /**< Device request */
     AUDIO,              /**< Audio data packets */
-    CLOCK_SYNC          /**< Time sync between devices */
+    CLOCK_SYNC,         /**< Time sync between devices */
+    CONTROL_ROUTING     /**< Routing control */
 };
 
 /**
  * @enum ClockType
- * @brief Describes clock type of aa device
+ * @brief Describes clock type of a device
  */
 enum ClockType : uint32_t {
     CKTYPE_NONE = 0,    /** No clock sync on device */
@@ -82,6 +83,9 @@ enum ControlResponseCode : uint8_t {
     CONTROL_ACK = 1 << 2,
     CREATE_TYPE_UNK = 1 << 3,
     CREATE_ALLOC_FAILED = 1 << 4, /**< Resource allocation failed on pipe creation */
+    ROUTE_EXISTS,
+    FAILED_CREATE_ROUTE,
+    FAILED_DELETE_ROUTE,
     CONTROL_ERROR,                /**< Control generic error */
 };
 
@@ -174,6 +178,34 @@ struct ControlData {
 };
 
 /**
+ * @enum ControlRouteCommand
+ * @brief All possible control commands for an audio route
+ */
+enum ControlRouteCommand : uint16_t {
+    CTRL_ROUTE_UNKNOWN_CMD = 0x00,
+    CTRL_ROUTE_CREATE_OUTBOUND = 0x01,
+    CTRL_ROUTE_DELETE_OUTBOUND = 0x02,
+    CTRL_ROUTE_CREATE_INBOUND,
+    CTRL_ROUTE_DELETE_INBOUND,
+    CTRL_ROUTE_CLEAR_ALL
+};
+
+/**
+ * @struct ControlAudioRoute
+ * @brief Create ou delete a route between two devices pipes. A route is uniquely defined
+ * by two tuples (channel, uid), one for source, one for destination. One tuple is an endpoint.
+ * An endpoint may be connected to multiple routes.
+ */
+struct ControlAudioRoute {
+    uint8_t source_channel;     /** Audio source device channel */
+    uint8_t dest_channel;       /** Audio destination device channel */
+    uint16_t source_device_uid; /** Audio source device uid */
+    uint16_t dest_device_uid;   /** Audio destination device uid */
+    uint16_t transaction_id;    /** Transaction identifier */
+    ControlRouteCommand cmd;    /** Routing operation */
+};
+
+/**
  * @struct ControlResponse
  * @brief Error management in control frames. Especially for pipe creation.
  */
@@ -218,6 +250,7 @@ typedef OANPacket<ControlData> ControlPacket;                   /**< Full OAN Pa
 typedef OANPacket<ControlPipeCreate> ControlPipeCreatePacket;   /**< Full OAN Packet for pipe creation */
 typedef OANPacket<ControlResponse> ControlResponsePacket;       /**< Full OAN Packet for control response */
 typedef OANPacket<ControlQuery> ControlQueryPacket;             /**< Full OAN Packet for control query */
+typedef OANPacket<ControlAudioRoute> ControlRoutePacket;        /**< Full OAN Packet for controlling stream routing */
 typedef OANPacket<ClockSync> ClockSyncPacket;                   /**< Full OAN Packet for clock synchronization between devices */
 
 #endif //OPENAUDIONETWORK_PACKET_STRUCTS_H

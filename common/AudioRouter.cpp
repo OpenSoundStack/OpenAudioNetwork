@@ -11,9 +11,11 @@
 
 AudioRouter::AudioRouter(uint16_t self_uid) {
     m_self_uid = self_uid;
-    m_routing_callback = [](AudioPacket&, LowLatHeader&) {};
+    m_routing_callback = [](AudioPacket&, LowLatHeader&, bool) {};
     m_channel_control_callback = [](ControlPacket&, LowLatHeader&) {};
     m_pipe_create_callback = [](ControlPipeCreatePacket&, LowLatHeader&) {};
+
+    m_transaction_tracker = 0;
 }
 
 bool AudioRouter::init_router(const std::string &eth_interface, const std::shared_ptr<NetworkMapper>& nmapper) {
@@ -40,7 +42,7 @@ void AudioRouter::poll_local_audio_buffer() {
         llhdr.sender_uid = m_self_uid;
         llhdr.dest_uid = m_self_uid;
 
-        m_routing_callback(local_packet, llhdr);
+        m_routing_callback(local_packet, llhdr, true);
     }
 }
 
@@ -53,7 +55,7 @@ void AudioRouter::poll_audio_data(bool async) {
 
     if (rx_packet.llhdr.dest_uid == m_self_uid && rx_packet.payload.header.type == PacketType::AUDIO) {
         AudioPacket pck = rx_packet.payload;
-        m_routing_callback(pck, rx_packet.llhdr);
+        m_routing_callback(pck, rx_packet.llhdr, false);
     }
 }
 
@@ -124,7 +126,7 @@ void AudioRouter::send_audio_packet(const AudioPacket &packet, uint16_t dest_uid
     }
 }
 
-void AudioRouter::set_routing_callback(const std::function<void(AudioPacket&, LowLatHeader&)> &callback) {
+void AudioRouter::set_routing_callback(const std::function<void(AudioPacket&, LowLatHeader&, bool)> &callback) {
     m_routing_callback = callback;
 }
 
@@ -144,3 +146,72 @@ void AudioRouter::set_control_query_callback(const std::function<void(ControlQue
     m_control_query_callback = callback;
 }
 
+void AudioRouter::create_outbound_route(uint8_t source_channel, uint16_t destination_uid) {
+    std::cout << "Created outbound route : Channel " << (int)source_channel << " routed to device " << (int)destination_uid << std::endl;
+
+    m_outbound_routes.emplace_back(
+        source_channel,
+        destination_uid
+    );
+}
+
+void AudioRouter::create_inbound_route(uint8_t source_channel, uint16_t source_uid, uint8_t local_channel) {
+    std::cout << "Created inbound route : Stream (channel " <<
+        (int)source_channel << ", device " << (int)source_uid << ")" <<
+        " locally routed to self channel " << (int)local_channel << std::endl;
+
+    m_inbound_routes.emplace_back(
+        source_channel,
+        source_uid,
+        local_channel
+    );
+}
+
+std::optional<OutboundAudioRoute> AudioRouter::get_outbound_route(uint8_t source_channel) {
+    for (auto& route : m_outbound_routes) {
+        if (route.source_channel == source_channel) {
+            return route;
+        }
+    }
+
+    return {};
+}
+
+std::optional<uint8_t> AudioRouter::get_channel_inbound_route(uint8_t source_channel, uint16_t source_uid) {
+    for (auto& route : m_inbound_routes) {
+        if (route.source_uid == source_uid && route.source_channel == source_channel) {
+            return route.local_channel;
+        }
+    }
+
+    return {};
+}
+
+void AudioRouter::route_audio_packet(AudioPacket &packet) {
+    const uint8_t source_channel = packet.packet_data.source_channel;
+    auto route = get_outbound_route(source_channel);
+
+    if (route.has_value()) {
+        send_audio_packet(packet, route->destination_uid);
+    }
+}
+
+void AudioRouter::create_global_route(RouteNode& source, RouteNode& destination) {
+    // Decide which part of the route is created remotely
+    if (source.uid == m_self_uid) {
+        create_outbound_route(source.channel, destination.uid);
+    } else {
+        // Create transaction objects for async remote route creation
+    }
+
+    if (destination.uid == m_self_uid) {
+        create_inbound_route(source.channel, source.uid, destination.channel);
+    } else {
+        // Create transaction objects for async remote route creation
+    }
+}
+
+void AudioRouter::clear_all_routes() {
+    m_inbound_routes.clear();
+    m_outbound_routes.clear();
+}
