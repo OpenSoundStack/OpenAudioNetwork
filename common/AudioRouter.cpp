@@ -215,3 +215,13 @@ void AudioRouter::clear_all_routes() {
     m_inbound_routes.clear();
     m_outbound_routes.clear();
 }
+
+std::optional<RouteNode> AudioRouter::get_inbound_node_from_local_channel(uint8_t local_channel) {
+    for (auto& r : m_inbound_routes) {
+        if (r.local_channel == local_channel) {
+            return RouteNode{r.source_channel, r.source_uid};
+        }
+    }
+
+    return {};
+}

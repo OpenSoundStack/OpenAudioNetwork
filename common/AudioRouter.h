@@ -62,6 +62,7 @@ public:
 
     std::optional<OutboundAudioRoute> get_outbound_route(uint8_t source_channel);
     std::optional<uint8_t> get_channel_inbound_route(uint8_t source_channel, uint16_t source_uid);
+    std::optional<RouteNode> get_inbound_node_from_local_channel(uint8_t local_channel);
 private:
     std::unique_ptr<LowLatSocket> m_audio_iface;
     std::unique_ptr<LowLatSocket> m_control_iface;
