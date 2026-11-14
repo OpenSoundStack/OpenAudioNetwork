@@ -27,6 +27,10 @@ struct InboundAudioRoute {
 struct RouteNode {
     uint8_t channel;
     uint16_t uid;
+
+    inline bool operator==(const RouteNode& other) const {
+        return channel == other.channel && uid == other.uid;
+    }
 };
 
 class AudioRouter {
