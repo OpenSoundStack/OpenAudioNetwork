@@ -5,10 +5,6 @@
 
 #include "AudioRouter.h"
 
-#include <algorithm>
-
-#include "NetworkMapper.h"
-
 AudioRouter::AudioRouter(uint16_t self_uid) {
     m_self_uid = self_uid;
     m_routing_callback = [](AudioPacket&, LowLatHeader&, bool) {};
@@ -270,10 +266,10 @@ void AudioRouter::remote_create_inbound_route(uint16_t remote_dev, uint8_t sourc
     crp.packet_data.transaction_id = tr_id;
 
     transaction->set_transaction_payload(crp);
-    m_control_transactions.emplace_back(std::move(transaction));
 
-    send_control_packet(crp, remote_dev);
     transaction->set_transaction_sent();
+    m_control_transactions.emplace_back(std::move(transaction));
+    send_control_packet(crp, remote_dev);
 }
 
 uint16_t AudioRouter::get_new_transaction_id() {
@@ -287,7 +283,7 @@ void AudioRouter::process_control_routing_packet(const ControlRoutePacket &pck, 
     ControlResponsePacket resp{};
     resp.header.type = PacketType::CONTROL_RESPONSE;
     resp.packet_data.channel = 0;
-    resp.packet_data.response = ControlResponseCode::CREATE_OK;
+    resp.packet_data.response = ControlResponseCode::ROUTE_OK;
     resp.packet_data.pid = pck.packet_data.transaction_id;
 
     switch (cmd) {
@@ -317,4 +313,21 @@ void AudioRouter::process_control_routing_packet(const ControlRoutePacket &pck, 
 
     // No checks for now, so no possible errors
     send_control_packet(resp, originator);
+}
+
+bool AudioRouter::ack_transaction(uint16_t transaction_id) {
+    auto tr = std::find_if(
+        m_control_transactions.begin(), m_control_transactions.end(),
+        [transaction_id](const std::unique_ptr<ControlTransaction>& pred) {
+            return pred->get_transaction_id() == transaction_id;
+        }
+    );
+
+    if (tr == m_control_transactions.end()) {
+        return false;
+    } else {
+        // Remove tr from list as it is now complete
+        m_control_transactions.erase(tr);
+        return true;
+    }
 }

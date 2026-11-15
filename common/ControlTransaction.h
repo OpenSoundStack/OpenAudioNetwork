@@ -33,7 +33,8 @@ public:
     void update_transaction();
     void ack_transaction();
 
-    ControlTransactionState get_transaction_state();
+    ControlTransactionState get_transaction_state() const;
+    uint16_t get_transaction_id() const;
 private:
     uint16_t m_tr_id;
     ControlTransactionState m_tr_state;

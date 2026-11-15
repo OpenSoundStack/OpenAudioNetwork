@@ -24,6 +24,10 @@ void ControlTransaction::update_transaction() {
 
 }
 
-ControlTransactionState ControlTransaction::get_transaction_state() {
+ControlTransactionState ControlTransaction::get_transaction_state() const {
     return m_tr_state;
+}
+
+uint16_t ControlTransaction::get_transaction_id() const {
+    return m_tr_id;
 }

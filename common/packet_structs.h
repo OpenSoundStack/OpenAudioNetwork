@@ -78,12 +78,13 @@ enum class DataTypes : uint8_t {
  * @brief Error codes for control packets that needs a response
  */
 enum ControlResponseCode : uint8_t {
-    CREATE_OK = 1 << 0,
-    CREATE_ERROR = 1 << 1,
-    CONTROL_ACK = 1 << 2,
-    CREATE_TYPE_UNK = 1 << 3,
-    CREATE_ALLOC_FAILED = 1 << 4, /**< Resource allocation failed on pipe creation */
+    CREATE_OK = 1,
+    CREATE_ERROR = 2,
+    CONTROL_ACK,
+    CREATE_TYPE_UNK,
+    CREATE_ALLOC_FAILED, /**< Resource allocation failed on pipe creation */
     ROUTE_EXISTS,
+    ROUTE_OK,
     FAILED_CREATE_ROUTE,
     FAILED_DELETE_ROUTE,
     CONTROL_ERROR,                /**< Control generic error */

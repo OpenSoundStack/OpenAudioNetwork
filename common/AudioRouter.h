@@ -10,10 +10,12 @@
 #include "netutils/LowLatSocket.h"
 #include "packet_structs.h"
 #include "ControlTransaction.h"
+#include "NetworkMapper.h"
 
 #include <functional>
 #include <optional>
 #include <list>
+#include <algorithm>
 
 struct OutboundAudioRoute {
     uint8_t source_channel;
@@ -71,6 +73,8 @@ public:
     std::optional<OutboundAudioRoute> get_outbound_route(uint8_t source_channel);
     std::optional<uint8_t> get_channel_inbound_route(uint8_t source_channel, uint16_t source_uid);
     std::optional<RouteNode> get_inbound_node_from_local_channel(uint8_t local_channel);
+
+    bool ack_transaction(uint16_t transaction_id);
 private:
     void process_control_routing_packet(const ControlRoutePacket& pck, uint16_t originator);
     uint16_t get_new_transaction_id();
