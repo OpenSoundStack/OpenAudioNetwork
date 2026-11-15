@@ -60,7 +60,7 @@ public:
 
     void create_inbound_route(uint8_t source_channel, uint16_t source_uid, uint8_t local_channel);
     void create_outbound_route(uint8_t source_channel, uint16_t destination_uid);
-    void create_global_route(RouteNode& source, RouteNode& destination);
+    void create_global_route(const RouteNode& source, const RouteNode& destination);
 
     void clear_all_routes();
 

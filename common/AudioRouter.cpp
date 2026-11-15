@@ -196,7 +196,7 @@ void AudioRouter::route_audio_packet(AudioPacket &packet) {
     }
 }
 
-void AudioRouter::create_global_route(RouteNode& source, RouteNode& destination) {
+void AudioRouter::create_global_route(const RouteNode& source, const RouteNode& destination) {
     // Decide which part of the route is created remotely
     if (source.uid == m_self_uid) {
         create_outbound_route(source.channel, destination.uid);
