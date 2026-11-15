@@ -12,6 +12,8 @@ set(OAN_COMMON_SOURCES
         ClockSlave.cpp
         ClockSlave.h
         ../peer/peer_conf.h
+        ControlTransaction.cpp
+        ControlTransaction.h
 )
 
 if(EMBEDDED_BUILD)
