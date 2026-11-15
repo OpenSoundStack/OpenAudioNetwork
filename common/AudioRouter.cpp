@@ -114,6 +114,13 @@ void AudioRouter::poll_control_packets(bool async) {
             memcpy(&packet_content.packet_data, raw_packet_buffer + sizeof(LowLatPacket<CommonHeader>), sizeof(ControlQuery));
 
             m_control_query_callback(packet_content, header->llhdr);
+        } else if (header->payload.type == PacketType::CONTROL_ROUTING) {
+            ControlRoutePacket packet_content{};
+
+            packet_content.header = header->payload;
+            memcpy(&packet_content.packet_data, raw_packet_buffer + sizeof(LowLatPacket<CommonHeader>), sizeof(ControlAudioRoute));
+
+            process_control_routing_packet(packet_content, header->llhdr.sender_uid);
         }
     }
 }
@@ -202,12 +209,19 @@ void AudioRouter::create_global_route(const RouteNode& source, const RouteNode& 
         create_outbound_route(source.channel, destination.uid);
     } else {
         // Create transaction objects for async remote route creation
+        remote_create_outbound_route(source.uid, source.channel, destination.uid);
     }
 
     if (destination.uid == m_self_uid) {
         create_inbound_route(source.channel, source.uid, destination.channel);
     } else {
         // Create transaction objects for async remote route creation
+        remote_create_inbound_route(
+            destination.uid,
+            source.channel,
+            source.uid,
+            destination.channel
+        );
     }
 }
 
@@ -224,4 +238,83 @@ std::optional<RouteNode> AudioRouter::get_inbound_node_from_local_channel(uint8_
     }
 
     return {};
+}
+
+void AudioRouter::remote_create_outbound_route(uint16_t remote_dev, uint8_t source_channel, uint16_t destination_uid) {
+    auto tr_id = get_new_transaction_id();
+    auto transaction = std::make_unique<ControlTransaction>(tr_id);
+
+    ControlRoutePacket crp{};
+    crp.header.type = PacketType::CONTROL_ROUTING;
+    crp.packet_data.cmd = ControlRouteCommand::CTRL_ROUTE_CREATE_OUTBOUND;
+    crp.packet_data.source_channel = source_channel;
+    crp.packet_data.dest_device_uid = destination_uid;
+    crp.packet_data.transaction_id = tr_id;
+
+    transaction->set_transaction_payload(crp);
+    m_control_transactions.emplace_back(std::move(transaction));
+
+    m_control_iface->send_data(crp, remote_dev);
+}
+
+void AudioRouter::remote_create_inbound_route(uint16_t remote_dev, uint8_t source_channel, uint16_t source_uid, uint8_t remote_channel) {
+    auto tr_id = get_new_transaction_id();
+    auto transaction = std::make_unique<ControlTransaction>(tr_id);
+
+    ControlRoutePacket crp{};
+    crp.header.type = PacketType::CONTROL_ROUTING;
+    crp.packet_data.cmd = ControlRouteCommand::CTRL_ROUTE_CREATE_INBOUND;
+    crp.packet_data.source_channel = source_channel;
+    crp.packet_data.source_device_uid = source_uid;
+    crp.packet_data.dest_channel = remote_channel;
+    crp.packet_data.transaction_id = tr_id;
+
+    transaction->set_transaction_payload(crp);
+    m_control_transactions.emplace_back(std::move(transaction));
+
+    send_control_packet(crp, remote_dev);
+    transaction->set_transaction_sent();
+}
+
+uint16_t AudioRouter::get_new_transaction_id() {
+    m_transaction_tracker++;
+    return m_transaction_tracker;
+}
+
+void AudioRouter::process_control_routing_packet(const ControlRoutePacket &pck, uint16_t originator) {
+    auto cmd = pck.packet_data.cmd;
+
+    ControlResponsePacket resp{};
+    resp.header.type = PacketType::CONTROL_RESPONSE;
+    resp.packet_data.channel = 0;
+    resp.packet_data.response = ControlResponseCode::CREATE_OK;
+    resp.packet_data.pid = pck.packet_data.transaction_id;
+
+    switch (cmd) {
+        case ControlRouteCommand::CTRL_ROUTE_CLEAR_ALL:
+            clear_all_routes();
+            break;
+        case ControlRouteCommand::CTRL_ROUTE_CREATE_OUTBOUND:
+            create_outbound_route(
+                pck.packet_data.source_channel,
+                pck.packet_data.dest_device_uid
+            );
+            break;
+        case ControlRouteCommand::CTRL_ROUTE_CREATE_INBOUND:
+            create_inbound_route(
+                pck.packet_data.source_channel,
+                pck.packet_data.source_device_uid,
+                pck.packet_data.dest_channel
+            );
+            break;
+        case ControlRouteCommand::CTRL_ROUTE_DELETE_OUTBOUND:
+            break;
+        case ControlRouteCommand::CTRL_ROUTE_DELETE_INBOUND:
+            break;
+        default:
+            break;
+    }
+
+    // No checks for now, so no possible errors
+    send_control_packet(resp, originator);
 }
