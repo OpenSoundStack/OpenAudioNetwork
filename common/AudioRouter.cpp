@@ -150,7 +150,9 @@ void AudioRouter::set_control_query_callback(const std::function<void(ControlQue
 }
 
 void AudioRouter::create_outbound_route(uint8_t source_channel, uint16_t destination_uid) {
+#ifndef __ZEPHYR__
     std::cout << "Created outbound route : Channel " << (int)source_channel << " routed to device " << (int)destination_uid << std::endl;
+#endif // __ZEPHYR__
 
     m_outbound_routes.emplace_back(
         source_channel,
@@ -159,9 +161,11 @@ void AudioRouter::create_outbound_route(uint8_t source_channel, uint16_t destina
 }
 
 void AudioRouter::create_inbound_route(uint8_t source_channel, uint16_t source_uid, uint8_t local_channel) {
+#ifndef __ZEPHYR__
     std::cout << "Created inbound route : Stream (channel " <<
         (int)source_channel << ", device " << (int)source_uid << ")" <<
         " locally routed to self channel " << (int)local_channel << std::endl;
+#endif // __ZEPHYR__
 
     m_inbound_routes.emplace_back(
         source_channel,
